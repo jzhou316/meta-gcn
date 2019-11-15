@@ -4,6 +4,9 @@ data/
 # saved models
 src/saved_models
 
+# pycharm
+*.idea/
+
 
 
 
