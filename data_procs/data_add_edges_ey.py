@@ -71,8 +71,8 @@ def extend_edges_ey(edge_index, edge_y=None, node_y=None, num_nodes=None,
     if isinstance(edge_index, np.ndarray):
         is_numpy = True
         edge_index = torch.tensor(edge_index)
-        edge_y = torch.tensor(edge_y) if edge_y is not None else None
-        node_y = torch.tensor(node_y) if node_y is not None else None
+        edge_y = torch.tensor(edge_y).byte() if edge_y is not None else None
+        node_y = torch.tensor(node_y).byte() if node_y is not None else None
     elif isinstance(edge_index, torch.Tensor):
         is_numpy = False
     else:

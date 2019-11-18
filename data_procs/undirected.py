@@ -1,5 +1,5 @@
 import torch
-from torch_sparse.utils import unique
+from torch_sparse.utils.unique import unique
 from torch_geometric.utils.num_nodes import maybe_num_nodes
 
 
