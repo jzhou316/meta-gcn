@@ -15,7 +15,7 @@ class GraphData(Data):
         if 'num_edges' in graph_dict:
             del graph_dict['num_edges']  # conflict with Data's property method 'num_edges'
         if 'num_evils' in graph_dict:
-            del graph_dict['num_evils']  # otherwise error from Batch.from_data_list
+            del graph_dict['num_evils']  # otherwise error from Batch.from_data_list (figure out later)
         super().__init__(**graph_dict)
         if to_tensor:
             self.to_tensor()
