@@ -19,7 +19,7 @@ data_file = 'debru/debru_no100k_ev10k_us.hdf5'
 data_file = 'kadem/kadem_no100k_ev10k_us.hdf5'
 data_file = 'leet/leet_no100k_ev10k_us.hdf5'
 '''
-save_dir = '../data/botnet/processed'
+save_dir = '../data/botnet/ev10k'
 seed = 0
 split_ratio = [8, 1, 1]
 #####

@@ -43,7 +43,7 @@ def parse_args():
 
 ##### some functions
 def degree(edge_index, num_nodes, degree_type='out'):
-    '''
+    """
     Calculate node degrees in a graph.
 
     Input:
@@ -53,8 +53,8 @@ def degree(edge_index, num_nodes, degree_type='out'):
                                      For an undirected graph, this doesn't make a difference.
 
     Output:
-        deg (torch.Tensor): size (num_nodes,), node degrees. 
-    '''
+        deg (torch.Tensor): size (num_nodes,), node degrees.
+    """
     assert degree_type in ['out', 'in']
     num_nodes = maybe_num_nodes(edge_index, num_nodes)
     edge_weight = edge_index.new_ones((edge_index.size(1),), dtype=torch.float)
@@ -66,7 +66,7 @@ def degree(edge_index, num_nodes, degree_type='out'):
 
 
 def add_degree_file(path, degree_type='out', append_to_x=True):
-    '''
+    """
     Calculate node degrees for all graphs stored in a HDF5 file, and store the degrees.
 
     Input:
@@ -77,7 +77,7 @@ def add_degree_file(path, degree_type='out', append_to_x=True):
     Note:
         - Default is the out-degree.
         - In the input file, each graph must have attribute 'num_nodes'.
-    '''
+    """
     assert degree_type in ['out', 'in']
     with h5py.File(path, 'r+') as f:
         for graph_id in tqdm(f):
@@ -104,5 +104,4 @@ if __name__ == '__main__':
 
     data_path = os.path.join(args.data_dir, args.data_file)
 
-    add_degree_file(data_path, degree_type=args.degree_type, append_to_x=args.append2x)
-
+    add_degree_file(data_path, degree_type=args.degree_type, append_to_x=bool(args.append2x))
