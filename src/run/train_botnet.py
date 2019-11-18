@@ -44,6 +44,7 @@ save_name = 'temp_model.pt'
 
 in_memory = False
 batch_size = 1
+shuffle = False
 
 devid = 0
 seed = 0
@@ -91,6 +92,7 @@ def parse_args():
     parser.add_argument('--data_test', type=str, default=data_test, help='file name of the test dataset')
     parser.add_argument('--bsz', type=int, default=batch_size, help='batch size')
     parser.add_argument('--in_mem', type=int, default=in_memory, help='whether to load all the data into memory')
+    parser.add_argument('--shuffle', type=int, default=shuffle, help='whether to shuffle training data')
     # model
     parser.add_argument('--in_channels', type=int, default=in_channels, help='input node feature size')
     parser.add_argument('--enc_sizes', type=int, nargs='*', default=enc_sizes, help='encoding node feature sizes')
@@ -234,7 +236,7 @@ early_stopper = EarlyStopping(patience=5, verbose=True)
 def test(model, data_loader, criterion, device=device):
     model.eval()
     loss_avg = 0
-    acc = fpr = fnr = rec = prc = 0
+    acc = fpr = fnr = rec = prc = f1 = 0
     with torch.no_grad():
         for n, batch in enumerate(data_loader):  # here batch size is 1 for val and test data
             batch.to(device)
@@ -255,6 +257,7 @@ def test(model, data_loader, criterion, device=device):
             fnr += false_negative_rate(pred, y)
             rec += recall(pred, y)
             prc += precision(pred, y)
+            f1 += f1_score(pred, y)
 
     loss_avg = loss_avg / (n + 1)
     acc = acc / (n + 1)
@@ -262,8 +265,9 @@ def test(model, data_loader, criterion, device=device):
     fnr = fnr / (n + 1)
     rec = rec / (n + 1)
     prc = prc / (n + 1)
+    f1 = f1 / (n + 1)
 
-    return loss_avg, acc, fpr, fnr, rec, prc
+    return loss_avg, acc, fpr, fnr, rec, prc, f1
 
 
 best_epoch = 0
@@ -279,7 +283,6 @@ for ep in range(args.epochs):
         #         print('After loading data to cuda device:')
         #         print_cuda_mem()
         optimizer.zero_grad()
-        breakpoint()
         x = model(batch.x[:, 0].view(-1, 1), batch.edge_index, deg_K=batch.x[:, 1])
         loss = criterion(x, batch.y.long())
         #         print('After a forward pass:')
@@ -299,17 +302,18 @@ for ep in range(args.epochs):
                 fnr = false_negative_rate(pred, y)
                 rec = recall(pred, y)
                 prc = precision(pred, y)
-            log(
-                f'epoch: {ep + 1}, passed number of graphs: {num_train_graph}, train running loss: {loss_avg_train / num_train_graph:.5f} (passed time: {timeSince(start)})')
-            log(
-                f'                 false positive rate: {fpr:.6f}, false negative rate: {fnr:.5f}, recall: {rec:.5f}, precision: {prc:.5f}')
+                f1 = f1_score(pred, y)
+            log(f'epoch: {ep + 1}, passed number of graphs: {num_train_graph}, '
+                f'train running loss: {loss_avg_train / num_train_graph:.5f} (passed time: {timeSince(start)})')
+            log(f'                 false positive rate: {fpr:.6f}, false negative rate: {fnr:.5f}, '
+                f'recall: {rec:.5f}, precision: {prc:.5f}, f1: {f1:.5f}')
     #             f_log.flush()
     #             os.fsync(f_log.fileno())
 
-    loss_avg, acc, fpr, fnr, rec, prc = test(model, val_loader)
-    log(
-        f'Validation --- epoch: {ep + 1}, loss: {loss_avg:.5f}, acc: {acc:.5f}, false positive rate: {fpr:.6f}, false negative rate: {fnr:.5f}')
-    log(f'                                recall (true positive rate): {rec:.5f}, precision: {prc:.5f}')
+    loss_avg, acc, fpr, fnr, rec, prc, f1 = test(model, val_loader, criterion, device)
+    log(f'Validation --- epoch: {ep + 1}, loss: {loss_avg:.5f}, acc: {acc:.5f}, '
+        f'false positive rate: {fpr:.6f}, false negative rate: {fnr:.5f}')
+    log(f'                                recall (true positive rate): {rec:.5f}, precision: {prc:.5f}, f1: {f1:.5f}')
     scheduler.step(loss_avg)
 
     early_stopper(loss_avg)
@@ -335,8 +339,8 @@ if early_stopper.improved:
     best_model = model
 else:
     best_model = torch.load(os.path.join(args.save_dir, args.save_name))
-loss_avg, acc, fpr, fnr, rec, prc = test(best_model, test_loader)
-log(
-    '*' * 12 + f' best model obtained after epoch {best_epoch + 1}, saved at {os.path.join(args.save_dir, args.save_name)} ' + '*' * 12)
+loss_avg, acc, fpr, fnr, rec, prc, f1 = test(best_model, test_loader, criterion, device)
+log('*' * 12 + f' best model obtained after epoch {best_epoch + 1}, '
+               f'saved at {os.path.join(args.save_dir, args.save_name)} ' + '*' * 12)
 log(f'Testing --- loss: {loss_avg:.5f}, acc: {acc:.5f}, false positive rate: {fpr:.6f}, false negative rate: {fnr:.5f}')
-log(f'            recall (true positive rate): {rec:.5f}, precision: {prc:.5f}')
+log(f'            recall (true positive rate): {rec:.5f}, precision: {prc:.5f}, f1: {f1: .5f}')

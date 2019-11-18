@@ -43,7 +43,10 @@ def precision(pred, target):
 def f1_score(pred, target):
     prec = precision(pred, target)
     rec = recall(pred, target)
-    return 2 * (prec * rec) / (prec + rec)
+    try:
+        return 2 * (prec * rec) / (prec + rec)
+    except:
+        return 0
 
 
 def false_positive_rate(pred, target):

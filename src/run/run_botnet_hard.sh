@@ -16,6 +16,7 @@ python train_botnet.py \
 --save_dir ../saved_models/botnet_ev10k \
 --save_name ${bot}_lay6_rh1_bs0_hatt_out_nh1_ep50.pt \
 --bsz 2 \
+--shuffle 0 \
 \
 --in_channels 1 \
 --enc_sizes 32 32 32 32 32 32 \
@@ -35,4 +36,4 @@ python train_botnet.py \
 \
 --lr 0.001 \
 --weight_decay 5e-4 \
---epochs 50 \
+--epochs 50

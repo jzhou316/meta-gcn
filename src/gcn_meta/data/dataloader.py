@@ -21,10 +21,10 @@ class GraphDataLoader(DataLoader):
         batch_size (int, optional): batch size
         num_workers (int, optional): number of workers for multiple subprocesses
     """
-    def __init__(self, dataset, batch_size=1, num_workers=0):
+    def __init__(self, dataset, batch_size=1, shuffle=False, num_workers=0):
         super().__init__(
             dataset,
             batch_size=batch_size,
-            shuffle=False,
+            shuffle=shuffle,
             collate_fn=collate_graph,
             num_workers=num_workers)
