@@ -10,7 +10,7 @@ python train_botnet.py \
 --in_mem 1 \
 \
 --data_dir ../../data/botnet/ev10k \
---data_train ${bot}_no100k_ev10k_us_train.hdf5 \
+--data_train ${bot}_no100k_ev10k_us_val.hdf5 \
 --data_val ${bot}_no100k_ev10k_us_val.hdf5 \
 --data_test ${bot}_no100k_ev10k_us_test.hdf5 \
 --save_dir ../saved_models/botnet_ev10k \

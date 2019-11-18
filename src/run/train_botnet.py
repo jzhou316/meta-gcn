@@ -62,9 +62,11 @@ att_dropout = 0
 att_dir = 'in'
 att_combine = 'cat'
 temperature = 0.1  # for hard attention using Gumbel-Softmax trick
+sample = 0
 
 deg_norm = 'sm'
 aggr = 'add'
+dropout = 0
 bias = False
 
 # if_focal_loss = False
@@ -277,6 +279,7 @@ for ep in range(args.epochs):
         #         print('After loading data to cuda device:')
         #         print_cuda_mem()
         optimizer.zero_grad()
+        breakpoint()
         x = model(batch.x[:, 0].view(-1, 1), batch.edge_index, deg_K=batch.x[:, 1])
         loss = criterion(x, batch.y.long())
         #         print('After a forward pass:')
