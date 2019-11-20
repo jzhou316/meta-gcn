@@ -57,7 +57,7 @@ class NodeModelAttention(NodeModelBase):
         glorot(self.att_weight)
         zeros(self.bias)
 
-    def forward(self, x, edge_index, edge_attr=None, deg=None, edge_weight=None):
+    def forward(self, x, edge_index, edge_attr=None, deg=None, edge_weight=None, attn_store=None):
         """
         'deg' and 'edge_weight' are not used. Just to be consistent for API.
         """
@@ -106,10 +106,13 @@ class NodeModelAttention(NodeModelBase):
             x = x.sum(dim=1)
         else:
             x = x.mean(dim=1)
-
+ 
         # add bias
         if self.bias is not None:
             x = x + self.bias
+
+        if attn_store is not None:    # attn_store is a callback list in case we want to get the attention scores out
+            attn_store.append(alpha)
 
         return x
 
