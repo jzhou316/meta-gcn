@@ -332,7 +332,7 @@ class VotePoolModel(nn.Module):
         if residual:
             self.residual_net = nn.ModuleList([nn.Linear(in_c, out_c, bias=True)
                                                for in_c, out_c in zip(self.enc_sizes, self.enc_sizes[1:])])
-            self.num_residuals = len(self.residual_new)
+            self.num_residuals = len(self.residual_net)
         self.non_linear = activation(non_linear)
         self.out_net = SATOutLayer(enc_sizes[-1], num_classes)
 
