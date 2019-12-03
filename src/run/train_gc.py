@@ -207,10 +207,10 @@ for fold, (train_idx, test_idx, val_idx) in enumerate(zip(*k_fold_gc(dataset, ar
         logger.info(f'Training --- epoch: {ep + 1}/{args.epochs}')
 
         model.train()
-
+        breakpoint()
         loss_avg_train, remaining_nodes = train(model, optimizer, train_loader, criterion, device,
                                                 log_interval=args.log_interval, logger=logger)
-
+        breakpoint()
         loss_avg, acc, remaining_nodes = eval(model, val_loader, criterion, device)
 
         logger.info(f'Validation --- epoch: {ep + 1}/{args.epochs}, loss: {loss_avg:.5f}, acc: {acc:.5f} '

@@ -47,6 +47,4 @@ def eval(model, data_loader, criterion, device):
 
             correct += out.argmax(dim=1).eq(batch.y).sum().item()
 
-            breakpoint()
-
     return loss_total / len(data_loader.dataset), correct / len(data_loader.dataset), remaining_nodes
