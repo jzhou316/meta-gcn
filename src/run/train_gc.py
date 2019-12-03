@@ -107,13 +107,13 @@ class m(nn.Module):
         self.lin = nn.Linear(89, 2)
 
     def forward(self, x, edge_index):
-        out = self.lin(x).sum(dim=0)
+        out = self.lin(x).sum(dim=0, keepdim=True)
         return out
 
     def reset_parameters(self):
         pass
 
-
+# need to care about batching graph level output
 model = m()
 
 logger.info('model ' + '-' * 10)
