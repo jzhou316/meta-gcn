@@ -191,6 +191,7 @@ for fold, (train_idx, test_idx, val_idx) in enumerate(zip(*k_fold_gc(dataset, ar
     # TypeError: iteration over a 0-d array Python
     # reason is *_idx[idx] has size torch.Size([])
 
+    breakpoint()
     train_loader = GraphDataLoaderDataset(train_dataset, args.bsz, shuffle=True)
     val_loader = GraphDataLoaderDataset(val_dataset, args.bsz, shuffle=False)
     test_loader = GraphDataLoaderDataset(test_dataset, args.bsz, shuffle=False)
