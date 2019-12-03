@@ -7,14 +7,14 @@ import time
 import torch
 import torch.nn as nn
 import torch.utils.data as data
-from torch.utils.data import DataLoader
 
 sys.path.insert(0, '../')
-from gcn_meta.optim.utils import logging_config
+from gcn_meta.optim.utils import logging_config, time_since
 from gcn_meta.data.dataset import MyTUDataset
 from gcn_meta.optim.earlystop import EarlyStopping
 from gcn_meta.data.cross_validation import k_fold_gc
 from gcn_meta.data.dataloader import GraphDataLoaderDataset
+from gcn_meta.optim.train_eval_gc import train, eval
 
 
 # ========== some default parameters ==========
@@ -29,6 +29,7 @@ batch_size = 1
 save_dir = os.path.join('../saved_models_gc', data_name.lower())
 save_name = 'temp_model.pt'
 
+folds = 10
 # if_focal_loss = False
 learning_rate = 0.001
 # grad_max_norm = 5
@@ -43,14 +44,14 @@ def parse_args():
     parser.add_argument('--devid', type=int, default=devid, help='device id; -1 for CPU')
     parser.add_argument('--seed', type=int, default=seed, help='random seed')
     parser.add_argument('--logmode', type=str, default='w', help='logging file mode')
-    parser.add_argument('--log_interval', type=int, default=80, help='logging interval during training')
+    parser.add_argument('--log_interval', type=int, default=200, help='logging interval during training')
     # data loading
     parser.add_argument('--data_dir', type=str, default=data_dir, help='data directory')
     parser.add_argument('--data_name', type=str, default=data_name, choices=['DD', 'ENZYMES', 'PROTEINS', 'COLLAB',
                                                                            'NCI1', 'NCI109', 'MUTAG', 'IMDB-BINARY'],
                         help='dataset name')
     parser.add_argument('--add_sl', type=int, default=add_sl, help='whether to add self loops')
-    parser.add_argument('--folds', type=int, default=10, help='number of fold for cross validation')
+    parser.add_argument('--folds', type=int, default=folds, help='number of fold for cross validation')
     parser.add_argument('--bsz', type=int, default=batch_size, help='batch size')
     # model
 
@@ -100,18 +101,41 @@ dataset = MyTUDataset(os.path.join(args.data_dir, args.data_name), args.data_nam
 
 
 # ======== define the model, optimizer, and loss
-# model =
+class m(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, x, edge_index):
+        return torch.tensor([0.5, 0.5]).to(x.device)
+
+
+model = m()
 
 logger.info('model ' + '-' * 10)
-# logger.info(repr(model))
+logger.info(repr(model))
 
-# model.to(device)
+model.to(device)
 
 criterion = nn.CrossEntropyLoss()
 
 
 # ======== train the model: K-fold cross validation
+if args.folds < 2:
+    # minimal value is 2, so we force the cross validation loop to stop after the first run
+    args.folds = 2
+    no_cv = True
+else:
+    no_cv = False
+
+loss_cv, acc_cv = [], []
 for fold, (train_idx, test_idx, val_idx) in enumerate(zip(*k_fold_gc(dataset, args.folds))):
+    # logging information
+    logger.info('*' * 12 + f' cross validation {fold + 1}/{args.folds} ' + '*' * 12)
+    save_path = os.path.join(args.save_dir, args.save_name)
+    save_path, ext = os.path.splitext(save_path)
+    save_path = save_path + f'_cv{fold + 1}' + ext
+
+    # load split dataset
     train_dataset = data.Subset(dataset, train_idx.view(-1, 1))
     test_dataset = data.Subset(dataset, test_idx.view(-1, 1))
     val_dataset = data.Subset(dataset, val_idx.view(-1, 1))
@@ -123,20 +147,58 @@ for fold, (train_idx, test_idx, val_idx) in enumerate(zip(*k_fold_gc(dataset, ar
     val_loader = GraphDataLoaderDataset(val_dataset, args.bsz, shuffle=False)
     test_loader = GraphDataLoaderDataset(test_dataset, args.bsz, shuffle=False)
 
-    # model.to(device).reset_parameters()
-    # optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.25, patience=1)
+    # initialize model, optimizer, etc.
+    model.to(device).reset_parameters()
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.25, patience=1)
     early_stopper = EarlyStopping(patience=5, mode='min', verbose=True, logger=logger)
 
-    for epoch in range(args.epochs):
-        # model.train()
+    # training
+    start = time.time()
+    for ep in range(args.epochs):
+        logger.info(f'Training --- epoch: {ep + 1}/{args.epochs}')
 
-        # loss_avg_train = train_gc(model, optimizer, criterion, train_loader)
+        model.train()
 
-        for batch in train_loader:
-            breakpoint()
-            batch.to(device)
+        loss_avg_train = train(model, optimizer, train_loader, criterion, device,
+                               log_interval=args.log_interval, logger=logger)
 
+        loss_avg, acc = eval(model, val_loader, criterion, device)
 
+        logger.info(f'Validation --- epoch: {ep + 1}/{args.epochs}, loss: {loss_avg:.5f}, acc: {acc:.5f} '
+                    f'(passed time: {time_since(start)})')
 
+        scheduler.step(loss_avg)
 
+        early_stopper(loss_avg)
+        if early_stopper.improved:
+            torch.save(model, save_path)
+            logger.info(f'model saved at {save_path}.')
+            best_epoch = ep
+        elif early_stopper.early_stop:
+            logger.info(f'Early stopping here.')
+            break
+        else:
+            pass
+
+    if early_stopper.improved:
+        best_model = model
+    else:
+        best_model = torch.load(save_path)
+    loss_avg, acc = eval(best_model, test_loader, criterion, device)
+    logger.info('*' * 12 + f' best model obtained after epoch {best_epoch + 1}, '
+                           f'saved at {save_path} ' + '*' * 12)
+    logger.info(f'Testing --- loss: {loss_avg:.5f}, acc: {acc:.5f}')
+
+    # record results for the current fold
+    loss_cv.append(loss_avg)
+    acc_cv.append(acc)
+
+    if no_cv:
+        break
+
+logger.info('=' * 50)
+logger.info(f'Average loss from cross validation {sum(loss_cv) / len(loss_cv):.5f} '
+            f'(std: {torch.std(torch.tensor(loss_cv)).item():.5f})')
+logger.info(f'Average accuracy from cross validation {sum(acc_cv) / len(acc_cv):.5f} '
+            f'(std: {torch.std(torch.tensor(acc_cv)).item():.5f})')
