@@ -104,9 +104,11 @@ dataset = MyTUDataset(os.path.join(args.data_dir, args.data_name), args.data_nam
 class m(nn.Module):
     def __init__(self):
         super().__init__()
+        self.lin = nn.Linear(89, 2)
 
     def forward(self, x, edge_index):
-        return torch.tensor([0.5, 0.5]).to(x.device)
+        out = self.lin(x).sum(dim=0)
+        return out
 
     def reset_parameters(self):
         pass
