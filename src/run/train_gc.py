@@ -119,12 +119,22 @@ for fold, (train_idx, test_idx, val_idx) in enumerate(zip(*k_fold_gc(dataset, ar
     val_loader = DataLoader(val_dataset, args.bsz, shuffle=False)
     test_loader = DataLoader(test_dataset, args.bsz, shuffle=False)
 
-    model.to(device).reset_parameters()
+    # model.to(device).reset_parameters()
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.25, patience=1)
     early_stopper = EarlyStopping(patience=5, mode='min', verbose=True, logger=logger)
 
     breakpoint()
 
-    for
+    for epoch in range(args.epochs):
+        # model.train()
+
+        # loss_avg_train = train_gc(model, optimizer, criterion, train_loader)
+
+        for batch in train_loader:
+            breakpoint()
+            batch.to(device)
+
+
+
 
