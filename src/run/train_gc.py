@@ -45,7 +45,7 @@ def parse_args():
     parser.add_argument('--log_interval', type=int, default=80, help='logging interval during training')
     # data loading
     parser.add_argument('--data_dir', type=str, default=data_dir, help='data directory')
-    parser.add_argument('--data_name', type=str, default=dataset, choices=['DD', 'ENZYMES', 'PROTEINS', 'COLLAB',
+    parser.add_argument('--data_name', type=str, default=data_name, choices=['DD', 'ENZYMES', 'PROTEINS', 'COLLAB',
                                                                            'NCI1', 'NCI109', 'MUTAG', 'IMDB-BINARY'],
                         help='dataset name')
     parser.add_argument('--add_sl', type=int, default=add_sl, help='whether to add self loops')
