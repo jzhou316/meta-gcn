@@ -120,6 +120,8 @@ class VotePoolLayer(nn.Module):
         assert att_dir == 'out'    # dummy
         super().__init__()
 
+        self.in_channels = in_channels
+        self.out_channels = out_channels
         self.aggr = aggr
 
         # for graph pruning

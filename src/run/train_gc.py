@@ -174,7 +174,9 @@ else:
 loss_cv, acc_cv = [], []
 for fold, (train_idx, test_idx, val_idx) in enumerate(zip(*k_fold_gc(dataset, args.folds))):
     # logging information
+    logger.info('\n')
     logger.info('*' * 12 + f' cross validation {fold + 1}/{args.folds} ' + '*' * 12)
+    logger.info('\n')
     save_path = os.path.join(args.save_dir, args.save_name)
     save_path, ext = os.path.splitext(save_path)
     save_path = save_path + f'_cv{fold + 1}' + ext
