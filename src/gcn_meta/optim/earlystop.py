@@ -2,15 +2,16 @@
 
 class EarlyStopping:
     """Early stops the training if validation loss doesn't improve after a given patience."""
-    def __init__(self, patience=7, mode='min', verbose=False):
+    def __init__(self, patience=7, mode='min', verbose=False, logger=None):
         """
         Args:
             patience (int, optional): How long to wait after last time validation loss improved.
                                       Default: 7
             mode (str, optional): 'min' or 'max'.
                                   Default: 'min'
-            verbose (bool, optional): If True, prints a message for each validation loss improvement. 
+            verbose (bool, optional): If True, prints a message for each validation loss improvement.
                                       Default: False
+            logger (logging.Logger, optional): logger object. If not given, use print.
 
         Note:
             In the case of doing learning rate scheduling, the patience here could be set to
@@ -22,6 +23,7 @@ class EarlyStopping:
         self.patience = patience
         self.mode = mode
         self.verbose = verbose
+        self.logging = logger.info if logger else print
         self.counter = 0
         self.best = None
         self.improved = False
@@ -41,6 +43,6 @@ class EarlyStopping:
             self.improved = False
             self.counter += 1
             if self.verbose:
-                print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
+                self.logging(f'EarlyStopping counter: {self.counter} out of {self.patience}')
             if self.counter >= self.patience:
                 self.early_stop = True
