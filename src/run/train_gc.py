@@ -25,7 +25,7 @@ data_name = 'DD'    # 'DD', 'ENZYMES', 'PROTEINS', 'COLLAB', 'NCI1', 'NCI109', '
 # from https://ls11-www.cs.tu-dortmund.de/staff/morris/graphkerneldatasets
 add_sl = False
 batch_size = 1
-save_dir = os.path.join('../saved_models_gc', data_dir.lower())
+save_dir = os.path.join('../saved_models_gc', data_name.lower())
 save_name = 'temp_model.pt'
 
 # if_focal_loss = False
