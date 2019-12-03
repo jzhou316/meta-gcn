@@ -108,6 +108,9 @@ class m(nn.Module):
     def forward(self, x, edge_index):
         return torch.tensor([0.5, 0.5]).to(x.device)
 
+    def reset_parameters(self):
+        pass
+
 
 model = m()
 
