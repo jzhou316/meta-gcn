@@ -5,7 +5,7 @@ from torch.nn.utils.rnn import pad_sequence
 from torch_geometric.nn.inits import glorot, zeros
 from torch_geometric.utils import scatter_
 from torch_scatter import scatter_max
-from torch_geomteric.utils import subgraph
+from torch_geometric.utils import subgraph
 
 from .common import activation, softmax
 
