@@ -14,7 +14,7 @@ from gcn_meta.optim.utils import logging_config
 from gcn_meta.data.dataset import MyTUDataset
 from gcn_meta.optim.earlystop import EarlyStopping
 from gcn_meta.data.cross_validation import k_fold_gc
-from gcn_meta.data.dataloader import GraphDataLoader
+from gcn_meta.data.dataloader import GraphDataLoaderDataset
 
 
 # ========== some default parameters ==========
@@ -119,9 +119,9 @@ for fold, (train_idx, test_idx, val_idx) in enumerate(zip(*k_fold_gc(dataset, ar
     # TypeError: iteration over a 0-d array Python
     # reason is *_idx[idx] has size torch.Size([])
 
-    train_loader = GraphDataLoader(train_dataset, args.bsz, shuffle=True)
-    val_loader = GraphDataLoader(val_dataset, args.bsz, shuffle=False)
-    test_loader = GraphDataLoader(test_dataset, args.bsz, shuffle=False)
+    train_loader = GraphDataLoaderDataset(train_dataset, args.bsz, shuffle=True)
+    val_loader = GraphDataLoaderDataset(val_dataset, args.bsz, shuffle=False)
+    test_loader = GraphDataLoaderDataset(test_dataset, args.bsz, shuffle=False)
 
     # model.to(device).reset_parameters()
     # optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
