@@ -35,7 +35,7 @@ def collate_graph_dataset(graph_ds_list):
     Collating function to form graph mini-batch.
     It takes in a list of Graph Dataset objects and return a Batch.
     """
-    batch = Batch.from_data_list([gd.data for gd in graph_ds_list])
+    batch = Batch.from_data_list([gd for gd in graph_ds_list])  # gd is of type Data, when iterating over Graph Dataset
     return batch
 
 
