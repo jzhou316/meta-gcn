@@ -1,6 +1,11 @@
 import h5py
 import deepdish as dd
+import torch
 from torch.utils.data import Dataset
+from torch_geometric.utils import add_remaining_self_loops
+from torch_geometric.utils import degree
+from torch_geometric.datasets import TUDataset
+import torch_geometric.transforms as T
 
 from .data import GraphData
 from .utils import h5group_to_dict
@@ -42,3 +47,60 @@ class GraphDataset(Dataset):
             return GraphData(h5group_to_dict(self.data[str(index)]))
         else:
             raise ValueError
+
+
+class NormalizedDegree(object):
+    """
+    Taken from https://github.com/anonymousOPT/OTCoarsening/blob/master/src/datasets.py.
+    """
+    def __init__(self, mean, std):
+        self.mean = mean
+        self.std = std
+
+    def __call__(self, data):
+        deg = degree(data.edge_index[0], dtype=torch.float)
+        deg = (deg - self.mean) / self.std
+        data.x = deg.view(-1, 1)
+        return data
+
+
+class NodeFeatureOnes:
+    """
+    Put ones as node features for featureless graph.
+    """
+    def __init__(self):
+        pass
+
+    def __call__(self, data):
+        data.x = torch.ones(data.num_nodes, 1)
+        return data
+
+
+class MyTUDataset(TUDataset):
+    """
+    Graph classification dataset. Adapted from TUDataset, and
+    https://github.com/anonymousOPT/OTCoarsening/blob/master/src/datasets.py.
+    """
+    def __init__(self, path, name, x_deg=True, add_sl=False):
+        super().__init__(path, name)
+
+        if add_sl:
+            for data in self:
+                data.edge_index, _ = add_remaining_self_loops(data.edge_index)
+
+        if self.data.x is None:
+            if x_deg:
+                max_degree = 0
+                degs = []
+                for data in self:
+                    degs += [degree(data.edge_index[0], dtype=torch.long)]
+                    max_degree = max(max_degree, degs[-1].max().item())
+
+                if max_degree < 1000:
+                    self.transform = T.OneHotDegree(max_degree)
+                else:
+                    deg = torch.cat(degs, dim=0).to(torch.float)
+                    mean, std = deg.mean().item(), deg.std().item()
+                    self.transform = NormalizedDegree(mean, std)
+            else:
+                self.transform = NodeFeatureOnes()
