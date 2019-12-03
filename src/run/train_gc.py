@@ -128,8 +128,6 @@ for fold, (train_idx, test_idx, val_idx) in enumerate(zip(*k_fold_gc(dataset, ar
     # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.25, patience=1)
     early_stopper = EarlyStopping(patience=5, mode='min', verbose=True, logger=logger)
 
-    breakpoint()
-
     for epoch in range(args.epochs):
         # model.train()
 
