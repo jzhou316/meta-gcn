@@ -3,6 +3,8 @@ import argparse
 import random
 import sys
 import time
+import warnings
+warnings.filterwarnings("ignore")
 
 import torch
 import torch.nn as nn
