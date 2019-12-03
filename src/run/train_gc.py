@@ -71,6 +71,8 @@ def parse_args():
                         help='dataset name')
     parser.add_argument('--add_sl', type=int, default=add_sl, help='whether to add self loops')
     parser.add_argument('--folds', type=int, default=folds, help='number of fold for cross validation')
+    parser.add_argument('--no_cv', type=int, default=0, help='do not use cross validation '
+                                                             '(but data split is still determined by --folds')
     parser.add_argument('--bsz', type=int, default=batch_size, help='batch size')
     # model
     parser.add_argument('--enc_sizes', type=int, nargs='*', default=enc_sizes, help='encoding node feature sizes')
@@ -166,12 +168,10 @@ model.to(device)
 criterion = nn.CrossEntropyLoss()
 
 # ======== train the model: K-fold cross validation
-if args.folds < 2:
-    # minimal value is 2, so we force the cross validation loop to stop after the first run
-    args.folds = 2
-    no_cv = True
-else:
-    no_cv = False
+if args.folds < 3:
+    # minimal value is 2, but we want train/val/test, so minimal should be 3
+    raise ValueError('args.folds should be at least 3 (standard is 10)')
+
 
 loss_cv, acc_cv = [], []
 for fold, (train_idx, test_idx, val_idx) in enumerate(zip(*k_fold_gc(dataset, args.folds))):
@@ -191,7 +191,6 @@ for fold, (train_idx, test_idx, val_idx) in enumerate(zip(*k_fold_gc(dataset, ar
     # TypeError: iteration over a 0-d array Python
     # reason is *_idx[idx] has size torch.Size([])
 
-    breakpoint()
     train_loader = GraphDataLoaderDataset(train_dataset, args.bsz, shuffle=True)
     val_loader = GraphDataLoaderDataset(val_dataset, args.bsz, shuffle=False)
     test_loader = GraphDataLoaderDataset(test_dataset, args.bsz, shuffle=False)
@@ -243,7 +242,8 @@ for fold, (train_idx, test_idx, val_idx) in enumerate(zip(*k_fold_gc(dataset, ar
     loss_cv.append(loss_avg)
     acc_cv.append(acc)
 
-    if no_cv:
+    if args.no_cv:
+        # do not use cross validation, so we force the loop to break after first data split
         break
 
 logger.info('=' * 50)
