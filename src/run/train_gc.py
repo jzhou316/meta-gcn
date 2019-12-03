@@ -111,9 +111,12 @@ criterion = nn.CrossEntropyLoss()
 
 # ======== train the model: K-fold cross validation
 for fold, (train_idx, test_idx, val_idx) in enumerate(zip(*k_fold_gc(dataset, args.folds))):
-    train_dataset = data.Subset(dataset, train_idx)
-    test_dataset = data.Subset(dataset, test_idx)
-    val_dataset = data.Subset(dataset, val_idx)
+    train_dataset = data.Subset(dataset, train_idx.view(-1, 1))
+    test_dataset = data.Subset(dataset, test_idx.view(-1, 1))
+    val_dataset = data.Subset(dataset, val_idx.view(-1, 1))
+    # need to expand dimension, otherwise error when indexing a single element
+    # TypeError: iteration over a 0-d array Python
+    # reason is *_idx[idx] has size torch.Size([])
 
     train_loader = DataLoader(train_dataset, args.bsz, shuffle=True)
     val_loader = DataLoader(val_dataset, args.bsz, shuffle=False)
