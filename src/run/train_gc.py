@@ -102,7 +102,7 @@ dataset = MyTUDataset(os.path.join(args.data_dir, args.data_name), args.data_nam
 # model =
 
 logger.info('model ' + '-' * 10)
-logger.info(repr(model))
+# logger.info(repr(model))
 
 # model.to(device)
 
