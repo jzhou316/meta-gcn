@@ -14,6 +14,7 @@ from gcn_meta.data.dataset import MyTUDataset
 from gcn_meta.optim.earlystop import EarlyStopping
 from gcn_meta.data.cross_validation import k_fold_gc
 from gcn_meta.data.dataloader import GraphDataLoaderDataset
+from gcn_meta.models.gpool_hard_attention import VotePoolModel
 from gcn_meta.optim.train_eval_gc import train, eval
 
 
@@ -22,18 +23,34 @@ devid = 0
 seed = 0
 
 data_dir = '../../data'
-data_name = 'DD'    # 'DD', 'ENZYMES', 'PROTEINS', 'COLLAB', 'NCI1', 'NCI109', 'MUTAG', 'IMDB-BINARY', etc.
+data_name = 'DD'  # 'DD', 'ENZYMES', 'PROTEINS', 'COLLAB', 'NCI1', 'NCI109', 'MUTAG', 'IMDB-BINARY', etc.
 # from https://ls11-www.cs.tu-dortmund.de/staff/morris/graphkerneldatasets
 add_sl = False
 batch_size = 1
 save_dir = os.path.join('../saved_models_gc', data_name.lower())
 save_name = 'temp_model.pt'
 
+enc_sizes = [32, 32, 32, 32, 32, 32]
+residual = True
+act = 'relu'
+aggr = 'add'
+dropout = 0.0
+bias = False
+nheads = [1]
+att_act = 'lrelu'
+att_dropout = 0.0
+att_combine = 'cat'
+temperature = 0.1
+sample = False
+p_keep = -1
+relabel = False
+
 folds = 10
 # if_focal_loss = False
 learning_rate = 0.001
 # grad_max_norm = 5
 num_epochs = 5
+
 
 # ==============================================
 
@@ -48,13 +65,33 @@ def parse_args():
     # data loading
     parser.add_argument('--data_dir', type=str, default=data_dir, help='data directory')
     parser.add_argument('--data_name', type=str, default=data_name, choices=['DD', 'ENZYMES', 'PROTEINS', 'COLLAB',
-                                                                           'NCI1', 'NCI109', 'MUTAG', 'IMDB-BINARY'],
+                                                                             'NCI1', 'NCI109', 'MUTAG', 'IMDB-BINARY'],
                         help='dataset name')
     parser.add_argument('--add_sl', type=int, default=add_sl, help='whether to add self loops')
     parser.add_argument('--folds', type=int, default=folds, help='number of fold for cross validation')
     parser.add_argument('--bsz', type=int, default=batch_size, help='batch size')
     # model
-
+    parser.add_argument('--enc_sizes', type=int, nargs='*', default=enc_sizes, help='encoding node feature sizes')
+    parser.add_argument('--act', type=str, default=act, help='non-linear activation function after adding residual')
+    parser.add_argument('--residual', type=int, default=residual, help='whether to use residual')
+    # parser.add_argument('--n_classes', type=int, default=num_classes, help='number of classes for the output layer')
+    parser.add_argument('--aggr', type=str, choices=['add', 'mean', 'max'], default=aggr,
+                        help='feature aggregation method')
+    parser.add_argument('--dropout', type=float, default=dropout, help='dropout probability')
+    parser.add_argument('--bias', type=int, default=bias, help='whether to include bias in the model')
+    # attention (temperature is only for hard attention)
+    parser.add_argument('--nheads', type=int, nargs='*', default=nheads, help='number of heads in multihead attention')
+    parser.add_argument('--att_act', type=str, default=att_act, choices=['none', 'lrelu', 'relu'],
+                        help='attention activation function in multihead attention')
+    parser.add_argument('--att_dropout', type=float, default=att_dropout,
+                        help='attention dropout in multihead attention')
+    parser.add_argument('--att_combine', type=str, default=att_combine, choices=['cat', 'add', 'mean'],
+                        help='multihead combination method in multihead attention')
+    parser.add_argument('--temperature', type=float, default=temperature,
+                        help='temperature in multihead HARD attention')
+    parser.add_argument('--sample', type=int, default=sample, help='whether to sample at testing for HARD attention')
+    parser.add_argument('--p_keep', type=float, default=p_keep, help='attention probability threshold for pruning')
+    parser.add_argument('--relabel', type=int, default=relabel, help='whether to relabel nodes when pruning')
     # optimization
     parser.add_argument('--lr', type=float, default=learning_rate, help='learning rate')
     parser.add_argument('--weight_decay', type=float, default=5e-4, help='weight decay (L2 penalty)')
@@ -82,7 +119,6 @@ torch.manual_seed(args.seed)
 
 device = torch.device(f'cuda:{args.devid}') if args.devid > -1 else torch.device('cpu')
 
-
 # ======== logging setup
 log_name = os.path.splitext(args.save_name)[0]
 logger = logging_config(__name__, folder=args.save_dir, name=log_name, filemode=args.logmode)
@@ -95,26 +131,30 @@ logger.info('-' * 30)
 logger.info(time.ctime())
 logger.info('-' * 30)
 
-
 # ======== load the dataset
 dataset = MyTUDataset(os.path.join(args.data_dir, args.data_name), args.data_name, x_deg=True, add_sl=bool(args.add_sl))
 
 
 # ======== define the model, optimizer, and loss
-class m(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.lin = nn.Linear(89, 2)
-
-    def forward(self, x, edge_index):
-        out = self.lin(x).sum(dim=0, keepdim=True)
-        return out
-
-    def reset_parameters(self):
-        pass
-
 # need to care about batching graph level output
-model = m()
+in_channels = dataset.num_node_features
+num_classes = dataset.num_classes
+model = VotePoolModel(in_channels,
+                      args.enc_sizes,
+                      num_classes,
+                      non_linear=args.act,
+                      residual=bool(args.residual),
+                      dropout=args.dropout,
+                      att_act=args.att_act,
+                      att_dropout=args.att_dropout,
+                      att_combine=args.att_combine,
+                      bias=bool(args.bias),
+                      aggr=args.aggr,
+                      temperature=args.temperature,
+                      sample=bool(args.sample),
+                      p_keep=None if args.p_keep < 0 else args.p_keep,
+                      relabel=bool(args.relabel)
+                      )
 
 logger.info('model ' + '-' * 10)
 logger.info(repr(model))
@@ -122,7 +162,6 @@ logger.info(repr(model))
 model.to(device)
 
 criterion = nn.CrossEntropyLoss()
-
 
 # ======== train the model: K-fold cross validation
 if args.folds < 2:
@@ -165,10 +204,10 @@ for fold, (train_idx, test_idx, val_idx) in enumerate(zip(*k_fold_gc(dataset, ar
 
         model.train()
 
-        loss_avg_train = train(model, optimizer, train_loader, criterion, device,
-                               log_interval=args.log_interval, logger=logger)
+        loss_avg_train, remaining_nodes = train(model, optimizer, train_loader, criterion, device,
+                                                log_interval=args.log_interval, logger=logger)
 
-        loss_avg, acc = eval(model, val_loader, criterion, device)
+        loss_avg, acc, remaining_nodes = eval(model, val_loader, criterion, device)
 
         logger.info(f'Validation --- epoch: {ep + 1}/{args.epochs}, loss: {loss_avg:.5f}, acc: {acc:.5f} '
                     f'(passed time: {time_since(start)})')
@@ -190,7 +229,7 @@ for fold, (train_idx, test_idx, val_idx) in enumerate(zip(*k_fold_gc(dataset, ar
         best_model = model
     else:
         best_model = torch.load(save_path)
-    loss_avg, acc = eval(best_model, test_loader, criterion, device)
+    loss_avg, acc, remaining_nodes = eval(best_model, test_loader, criterion, device)
     logger.info('*' * 12 + f' best model obtained after epoch {best_epoch + 1}, '
                            f'saved at {save_path} ' + '*' * 12)
     logger.info(f'Testing --- loss: {loss_avg:.5f}, acc: {acc:.5f}')
