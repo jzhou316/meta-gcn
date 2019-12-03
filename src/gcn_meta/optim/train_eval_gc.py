@@ -7,7 +7,7 @@ def train(model, optimizer, data_loader, criterion, device, *, log_interval=None
     Loss should be calculated as the mean loss by default in `criterion`.
     """
     model.train()
-
+    breakpoint()
     loss_total = 0
     num_graphs = 0
     correct = 0
