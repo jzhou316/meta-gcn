@@ -85,8 +85,17 @@ class MyTUDataset(TUDataset):
         super().__init__(path, name)
 
         if add_sl:
+            '''this doesn't work, as the data are copied when indexed out
+            # for data in self:
+            #     data.edge_index, _ = add_remaining_self_loops(data.edge_index)
+            '''
+            data_list = []
             for data in self:
                 data.edge_index, _ = add_remaining_self_loops(data.edge_index)
+                data_list.append(data)
+            self.data, self.slices = self.collate(data_list)
+            # refer to https://github.com/rusty1s/pytorch_geometric/blob/eacb7d3e24a28aa50d7ae6d20a42676bc8ca1536
+            # /torch_geometric/datasets/tu_dataset.py#L140
 
         if self.data.x is None:
             if x_deg:

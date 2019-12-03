@@ -96,7 +96,7 @@ logger.info('-' * 30)
 
 
 # ======== load the dataset
-dataset = MyTUDataset(os.path.join(args.data_dir, args.data_name), args.data_name, x_deg=True, add_sl=args.add_sl)
+dataset = MyTUDataset(os.path.join(args.data_dir, args.data_name), args.data_name, x_deg=True, add_sl=bool(args.add_sl))
 
 
 # ======== define the model, optimizer, and loss
