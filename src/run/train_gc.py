@@ -4,6 +4,7 @@ import random
 import sys
 import time
 import warnings
+
 warnings.filterwarnings("ignore")
 
 import torch
@@ -18,7 +19,6 @@ from gcn_meta.data.cross_validation import k_fold_gc
 from gcn_meta.data.dataloader import GraphDataLoaderDataset
 from gcn_meta.models.gpool_hard_attention import VotePoolModel
 from gcn_meta.optim.train_eval_gc import train, eval
-
 
 # ========== some default parameters ==========
 devid = 0
@@ -142,7 +142,6 @@ logger.info('-' * 30)
 # ======== load the dataset
 dataset = MyTUDataset(os.path.join(args.data_dir, args.data_name), args.data_name, x_deg=True, add_sl=bool(args.add_sl))
 
-
 # ======== define the model, optimizer, and loss
 # need to care about batching graph level output
 in_channels = dataset.num_node_features
@@ -184,7 +183,6 @@ if args.folds < 3:
     # minimal value is 2, but we want train/val/test, so minimal should be 3
     raise ValueError('args.folds should be at least 3 (standard is 10)')
 
-
 loss_cv, acc_cv = [], []
 for fold, (train_idx, test_idx, val_idx) in enumerate(zip(*k_fold_gc(dataset, args.folds))):
     # logging information
@@ -220,10 +218,12 @@ for fold, (train_idx, test_idx, val_idx) in enumerate(zip(*k_fold_gc(dataset, ar
 
         model.train()
 
-        loss_avg_train, remaining_nodes = train(model, optimizer, train_loader, criterion, device,
-                                                log_interval=args.log_interval, logger=logger)
+        remaining_nodes = []
+        loss_avg_train = train(model, optimizer, train_loader, criterion, device,
+                               log_interval=args.log_interval, logger=logger, remaining_nodes=remaining_nodes)
 
-        loss_avg, acc, remaining_nodes = eval(model, val_loader, criterion, device)
+        remaining_nodes = []
+        loss_avg, acc = eval(model, val_loader, criterion, device, remaining_nodes=remaining_nodes)
 
         logger.info(f'Validation --- epoch: {ep + 1}/{args.epochs}, loss: {loss_avg:.5f}, acc: {acc:.5f} '
                     f'(passed time: {time_since(start)})')
@@ -245,7 +245,8 @@ for fold, (train_idx, test_idx, val_idx) in enumerate(zip(*k_fold_gc(dataset, ar
         best_model = model
     else:
         best_model = torch.load(save_path)
-    loss_avg, acc, remaining_nodes = eval(best_model, test_loader, criterion, device)
+    remaining_nodes = []
+    loss_avg, acc = eval(best_model, test_loader, criterion, device, remaining_nodes=remaining_nodes)
     logger.info('*' * 12 + f' best model obtained after epoch {best_epoch + 1}, '
                            f'saved at {save_path} ' + '*' * 12)
     logger.info(f'Testing --- loss: {loss_avg:.5f}, acc: {acc:.5f}')
