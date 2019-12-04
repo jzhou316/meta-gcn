@@ -200,7 +200,7 @@ for fold, (train_idx, test_idx, val_idx) in enumerate(zip(*k_fold_gc(dataset, ar
     model.to(device).reset_parameters()
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.25, patience=1)
-    early_stopper = EarlyStopping(patience=5, mode='min', verbose=True, logger=logger)
+    early_stopper = EarlyStopping(patience=args.es_patience, mode='min', verbose=True, logger=logger)
 
     # training
     start = time.time()
