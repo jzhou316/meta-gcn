@@ -153,7 +153,9 @@ def prune(x, edge_index, edge_select, relabel=False, batch_slices_x=None):
             batch_slices_x_pruned.append(end - reduced_num)
     else:
         edge_index, _ = subgraph(nodes, edge_index, relabel_nodes=False, num_nodes=x.size(0))
-        x[nodes, :] = 0    # mask out the unselected node features by 0
+        nodes_prune_mask = x.new_ones(x.size(0), dtype=torch.bool)
+        nodes_prune_mask[nodes] = False
+        x[nodes_prune_mask, :] = 0    # mask out the unselected node features by 0
         batch_slices_x_pruned = batch_slices_x
     return x, edge_index, nodes, batch_slices_x_pruned
 
@@ -406,7 +408,9 @@ class VotePoolModel(nn.Module):
                 if net.relabel:
                     xr = xr[nodes]
                 else:
-                    xr[nodes] = 0
+                    nodes_prune_mask = xo.new_ones(xo.size(0), dtype=torch.bool)
+                    nodes_prune_mask[nodes] = False
+                    xr[nodes_prune_mask] = 0
                 x = self.non_linear(xo + xr)
             else:
                 x = self.non_linear(xo)
