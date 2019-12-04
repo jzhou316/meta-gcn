@@ -74,6 +74,15 @@ class GCNModel(nn.Module):
         else:
             raise ValueError
 
+    def reset_parameters(self):
+        for net in self.gcn_net:
+            net.reset_parameters()
+        if self.residual_hop is not None:
+            for net in self.residuals:
+                net.reset_parameters()
+        if self.final_type != 'none':
+            self.final.reset_parameters()
+
     def forward(self, x, edge_index_K, edge_attr_K=None, deg_K=None, edge_weight_K=None, **kwargs):
         xr = None
         add_xr_at = -1
@@ -178,6 +187,9 @@ class GCNLayer(nn.Module):
                                   nodemodel=nodemodel,
                                   **kwargs)
         self.non_linear = activation(non_linear)
+
+    def reset_parameters(self):
+        self.gcn.reset_parameters()
 
     def forward(self, x, edge_index_K, edge_attr_K=None, deg_K=None, edge_weight_K=None, **kwargs):
         xo = self.gcn(x, edge_index_K, edge_attr_K, deg_K, edge_weight_K, **kwargs)

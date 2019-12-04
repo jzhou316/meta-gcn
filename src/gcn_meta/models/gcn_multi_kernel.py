@@ -69,6 +69,10 @@ class GCNMultiKernel(nn.Module):
 
         self.node_models = nn.ModuleList([self.nodemodel_dict[nodemodel](*args, **kwargs) for k in range(num_kernel)])
 
+    def reset_parameters(self):
+        for net in self.node_models:
+            net.reset_parameters()
+
     def forward(self, x, edge_index_K, edge_attr_K=None, deg_K=None, edge_weight_K=None, **kwargs):
         if isinstance(edge_index_K, torch.Tensor):
             edge_index_K = [edge_index_K]

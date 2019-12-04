@@ -391,9 +391,13 @@ class VotePoolModel(nn.Module):
         self.out_net = SATOutLayer(enc_sizes[-1], num_classes)
 
     def reset_parameters(self):
-        for net, rnet in zip(self.gpool_net, self.residual_net):
-            net.reset_parameters()
-            rnet.reset_parameters()
+        if self.residual:
+            for net, rnet in zip(self.gpool_net, self.residual_net):
+                net.reset_parameters()
+                rnet.reset_parameters()
+        else:
+            for net in self.gpool_net:
+                net.reset_parameters()
         self.out_net.reset_parameters()
 
     def forward(self, x, edge_index, batch_slices_x, remaining_nodes=None):
