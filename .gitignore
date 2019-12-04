@@ -3,6 +3,7 @@
 
 # saved models
 src/saved_models
+src/saved_models*
 
 # pycharm
 *.idea/

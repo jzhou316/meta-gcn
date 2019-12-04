@@ -115,7 +115,7 @@ def get_edge_select(x, edge_index, alpha, training=True, p_keep=None):
             node_keep = (out < p_keep).sum(dim=1) > 0    # size (N,)
             edge_keep = node_keep[edge_index[0]]    # size (E,)
             # === select edges if one attention score is extreme or all are non-extreme
-            edge_select = (alpha >= p_keep).sum(dim=1) > 0 | edge_keep
+            edge_select = ((alpha >= p_keep).sum(dim=1) > 0) | edge_keep
     else:
         # here alpha is the one-hot vector for each node
         edge_select = alpha.sum(dim=1) > 0  # looking at all heads

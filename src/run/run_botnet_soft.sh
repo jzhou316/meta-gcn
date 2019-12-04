@@ -5,7 +5,7 @@ set -e
 # bot=chord    # chord, debru, kadem, leet
 bot=$1
 
-CUDA_VISIBLE_DEVICES=2 \
+CUDA_VISIBLE_DEVICES=3 \
 python train_botnet.py \
 --devid 0 \
 --seed 0 \
@@ -23,7 +23,7 @@ python train_botnet.py \
 --in_channels 1 \
 --enc_sizes 32 32 32 32 32 32 \
 --nheads 1 \
---act lrelu \
+--act relu \
 --residual_hop 1 \
 --nodemodel attention \
 --bias 0 \
@@ -39,7 +39,7 @@ python train_botnet.py \
 --lr 0.001 \
 --weight_decay 5e-4 \
 --epochs 50 \
-& \
+
 CUDA_VISIBLE_DEVICES=3 \
 python train_botnet.py \
 --devid 0 \
@@ -58,7 +58,7 @@ python train_botnet.py \
 --in_channels 1 \
 --enc_sizes 32 32 32 32 32 32 \
 --nheads 1 \
---act lrelu \
+--act relu \
 --residual_hop 1 \
 --nodemodel attention \
 --bias 1 \
@@ -75,7 +75,7 @@ python train_botnet.py \
 --weight_decay 5e-4 \
 --epochs 50
 
-CUDA_VISIBLE_DEVICES=2 \
+CUDA_VISIBLE_DEVICES=3 \
 python train_botnet.py \
 --devid 0 \
 --seed 0 \
@@ -93,7 +93,7 @@ python train_botnet.py \
 --in_channels 1 \
 --enc_sizes 32 32 32 32 \
 --nheads 1 \
---act lrelu \
+--act relu \
 --residual_hop 1 \
 --nodemodel attention \
 --bias 0 \
@@ -109,7 +109,7 @@ python train_botnet.py \
 --lr 0.001 \
 --weight_decay 5e-4 \
 --epochs 50 \
-& \
+
 CUDA_VISIBLE_DEVICES=3 \
 python train_botnet.py \
 --devid 0 \
@@ -128,7 +128,7 @@ python train_botnet.py \
 --in_channels 1 \
 --enc_sizes 32 32 32 32 \
 --nheads 1 \
---act lrelu \
+--act relu \
 --residual_hop 1 \
 --nodemodel attention \
 --bias 1 \
@@ -163,7 +163,7 @@ python train_botnet.py \
 --in_channels 1 \
 --enc_sizes 32 32 32 32 32 32 32 32 \
 --nheads 1 \
---act lrelu \
+--act relu \
 --residual_hop 1 \
 --nodemodel attention \
 --bias 0 \
@@ -198,7 +198,7 @@ python train_botnet.py \
 --in_channels 1 \
 --enc_sizes 32 32 32 32 32 32 32 32 \
 --nheads 1 \
---act lrelu \
+--act relu \
 --residual_hop 1 \
 --nodemodel attention \
 --bias 1 \
