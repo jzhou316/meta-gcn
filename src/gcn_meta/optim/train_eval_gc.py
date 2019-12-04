@@ -14,8 +14,8 @@ def train(model, optimizer, data_loader, criterion, device, *, log_interval=None
     for n, batch in enumerate(data_loader, start=1):
         batch.to(device)
         optimizer.zero_grad()
-        out, remaining_nodes = model(batch.x, batch.edge_index, batch_slices_x=batch.__slices__['x'],
-                                     remaining_nodes=remaining_nodes)
+        out = model(batch.x, batch.edge_index, batch_slices_x=batch.__slices__['x'],
+                    remaining_nodes=remaining_nodes)
         loss = criterion(out, batch.y)
         loss.backward()
         optimizer.step()
@@ -42,8 +42,8 @@ def eval(model, data_loader, criterion, device, remaining_nodes=None):
     with torch.no_grad():
         for batch in data_loader:
             batch.to(device)
-            out, remaining_nodes = model(batch.x, batch.edge_index, batch_slices_x=batch.__slices__['x'],
-                                         remaining_nodes=remaining_nodes)
+            out = model(batch.x, batch.edge_index, batch_slices_x=batch.__slices__['x'],
+                        remaining_nodes=remaining_nodes)
             loss = criterion(out, batch.y)
             loss_total += float(loss) * batch.num_graphs
 
