@@ -292,8 +292,8 @@ class VotePoolLayer(nn.Module):
             attn_store.append(alpha)
 
         # prune the graph based on out hard attention
-        # with torch.no_grad():
-        edge_select = get_edge_select(x, edge_index, alpha, training=self.training, p_keep=self.p_keep)
+        with torch.no_grad():
+            edge_select = get_edge_select(x, edge_index, alpha, training=self.training, p_keep=self.p_keep)
         x, edge_index, nodes, batch_slices_x = prune(x, edge_index, edge_select,
                                                      relabel=self.relabel, batch_slices_x=batch_slices_x)
 
