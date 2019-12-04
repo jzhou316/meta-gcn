@@ -1,7 +1,7 @@
 import torch
 
 
-def train(model, optimizer, data_loader, criterion, device, *, log_interval=None, logger=None):
+def train(model, optimizer, data_loader, criterion, device, *, log_interval=None, logger=None, remaining_nodes=None):
     """
     Training for one epoch for graph classification task.
     Loss should be calculated as the mean loss by default in `criterion`.
@@ -14,7 +14,8 @@ def train(model, optimizer, data_loader, criterion, device, *, log_interval=None
     for n, batch in enumerate(data_loader, start=1):
         batch.to(device)
         optimizer.zero_grad()
-        out, remaining_nodes  = model(batch.x, batch.edge_index, batch.__slices__['x'])
+        out, remaining_nodes = model(batch.x, batch.edge_index, batch_slices_x=batch.__slices__['x'],
+                                     remaining_nodes=remaining_nodes)
         loss = criterion(out, batch.y)
         loss.backward()
         optimizer.step()
@@ -28,10 +29,10 @@ def train(model, optimizer, data_loader, criterion, device, *, log_interval=None
             logging('----- ' + f'passed number of graphs: {num_graphs}, training loss: {loss_total / num_graphs:.5f}, '
                                f'acc: {correct / num_graphs:.5f}')
 
-    return loss_total / num_graphs, remaining_nodes
+    return loss_total / num_graphs
 
 
-def eval(model, data_loader, criterion, device):
+def eval(model, data_loader, criterion, device, remaining_nodes=None):
     """
     Evaluation for graph classification task.
     """
@@ -41,10 +42,11 @@ def eval(model, data_loader, criterion, device):
     with torch.no_grad():
         for batch in data_loader:
             batch.to(device)
-            out, remaining_nodes = model(batch.x, batch.edge_index, batch.__slices__['x'])
+            out, remaining_nodes = model(batch.x, batch.edge_index, batch_slices_x=batch.__slices__['x'],
+                                         remaining_nodes=remaining_nodes)
             loss = criterion(out, batch.y)
             loss_total += float(loss) * batch.num_graphs
 
             correct += out.argmax(dim=1).eq(batch.y).sum().item()
 
-    return loss_total / len(data_loader.dataset), correct / len(data_loader.dataset), remaining_nodes
+    return loss_total / len(data_loader.dataset), correct / len(data_loader.dataset)

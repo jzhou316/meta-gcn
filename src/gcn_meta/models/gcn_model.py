@@ -1,4 +1,5 @@
 import torch.nn as nn
+from torch.nn.utils.rnn import pad_sequence
 
 from .gcn_multi_kernel import GCNMultiKernel
 from .common import activation
@@ -17,6 +18,7 @@ class GCNModel(nn.Module):
     def __init__(self, in_channels, enc_sizes, num_classes, non_linear='relu', non_linear_layer_wise='relu',
                  residual_hop=None, dropout=0.5, final_layer_config=None, final_type='none', pred_on='node', **kwargs):
         assert final_type in ['none', 'proj']
+        assert pred_on in ['node', 'graph']
         super().__init__()
 
         self.in_channels = in_channels
@@ -26,6 +28,7 @@ class GCNModel(nn.Module):
         self.residual_hop = residual_hop
         self.non_linear_layer_wise = non_linear_layer_wise
         self.final_type = final_type
+        self.pred_on = pred_on
 
         # allow different layers to have different attention heads
         # particularly for the last attention layer to be directly the output layer
@@ -94,6 +97,22 @@ class GCNModel(nn.Module):
             x = xo
         # size of x: (B * N, self.enc_sizes[-1]) -> (B * N, num_classes)
         x = self.final(x)
+
+        # graph level pooling for graph classification
+        # use mean pooling here
+        if self.pred_on == 'graph':
+            assert 'batch_slices_x' in kwargs
+            batch_slices_x = kwargs['batch_slices_x']
+            if len(batch_slices_x) == 2:
+                # only one graph in the batch
+                x = x.mean(dim=0, keepdim=True)    # size (1, num_classes)
+            else:
+                # more than one graphs in the batch
+                x_batch, lengths = zip(*[(x[i:j], j - i) for (i, j) in zip(batch_slices_x, batch_slices_x[1:])])
+                x_batch = pad_sequence(x_batch, batch_first=True,
+                                       padding_value=0)  # size (batch_size, max_num_nodes, num_classes)
+                x = x_batch.sum(dim=1) / x_batch.new_tensor(lengths)    # size (batch_size, num_classes)
+
         return x
 
 

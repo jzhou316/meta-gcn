@@ -396,8 +396,7 @@ class VotePoolModel(nn.Module):
             rnet.reset_parameters()
         self.out_net.reset_parameters()
 
-    def forward(self, x, edge_index, batch_slices_x):
-        remaining_nodes = []
+    def forward(self, x, edge_index, batch_slices_x, remaining_nodes=None):
         for n, net in enumerate(self.gpool_net):
             xo, edge_index, nodes, batch_slices_x = net(x, edge_index, batch_slices_x)
             xo = self.dropout(xo)
@@ -415,7 +414,8 @@ class VotePoolModel(nn.Module):
             else:
                 x = self.non_linear(xo)
 
-            remaining_nodes.append(nodes)
+            if remaining_nodes is not None:
+                remaining_nodes.append(nodes)
 
         x = self.out_net(x, batch_slices_x)    # size (num_graphs, num_classes)
-        return x, remaining_nodes
+        return x
