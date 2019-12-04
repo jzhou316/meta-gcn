@@ -101,6 +101,7 @@ def parse_args():
     parser.add_argument('--weight_decay', type=float, default=5e-4, help='weight decay (L2 penalty)')
     # parser.add_argument('--gradclip', type=float, default=grad_max_norm, help='gradient norm clip')
     parser.add_argument('--epochs', type=int, default=num_epochs, help='number of training epochs')
+    parser.add_argument('--es_patience', type=int, default=5, help='early stop patience')
     parser.add_argument('--save_dir', type=str, default=save_dir, help='directory to save the best model')
     parser.add_argument('--save_name', type=str, default=save_name, help='file name to save the best model')
     args = parser.parse_args()
