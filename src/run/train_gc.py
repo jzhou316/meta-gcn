@@ -147,6 +147,13 @@ dataset = MyTUDataset(os.path.join(args.data_dir, args.data_name), args.data_nam
 # need to care about batching graph level output
 in_channels = dataset.num_node_features
 num_classes = dataset.num_classes
+if len(args.nheads) < len(args.enc_sizes):
+    assert len(args.nheads) == 1
+    args.nheads = args.nheads * len(args.enc_sizes)
+elif len(args.nheads) == len(args.enc_sizes):
+    pass
+else:
+    raise ValueError
 model = VotePoolModel(in_channels,
                       args.enc_sizes,
                       num_classes,
