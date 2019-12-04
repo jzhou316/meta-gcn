@@ -57,7 +57,7 @@ class NodeModelAttention(NodeModelBase):
         glorot(self.att_weight)
         zeros(self.bias)
 
-    def forward(self, x, edge_index, edge_attr=None, deg=None, edge_weight=None, attn_store=None):
+    def forward(self, x, edge_index, edge_attr=None, deg=None, edge_weight=None, attn_store=None, **kwargs):
         """
         'deg' and 'edge_weight' are not used. Just to be consistent for API.
         """
