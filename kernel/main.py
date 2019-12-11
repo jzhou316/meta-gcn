@@ -15,6 +15,7 @@ from edge_pool import EdgePool
 from global_attention import GlobalAttentionNet
 from set2set import Set2SetNet
 from sort_pool import SortPool
+from hard_pool import HardPool
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--epochs', type=int, default=100)
@@ -44,10 +45,12 @@ nets = [
     GlobalAttentionNet,
     Set2SetNet,
     SortPool,
+    HardPool,
 ]
 
 datasets = ['PROTEINS']
 nets = [SAGPool]
+nets = [HardPool]
 
 layers = [2]
 hiddens = [128]
