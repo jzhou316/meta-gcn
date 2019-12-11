@@ -3,6 +3,7 @@ import torch.nn as nn
 from torch.nn import Parameter
 from torch_geometric.nn.inits import glorot, zeros
 from torch_geometric.utils import scatter_
+from torch_scatter import scatter_max
 from torch_geometric.nn.pool.topk_pool import filter_adj
 
 from .common import activation, softmax
