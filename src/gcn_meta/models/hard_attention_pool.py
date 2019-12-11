@@ -20,7 +20,7 @@ def gumbel_samples(base):
 
 class HardPooling(nn.Module):
     def __init__(self, in_channels, att_act='none', att_dropout=0.0,
-                 aggr='add', bias=False, temperature=0.1, sample=False **kwargs):
+                 aggr='add', bias=False, temperature=0.1, sample=False, **kwargs):
         super().__init__()
 
         self.in_channels = in_channels
