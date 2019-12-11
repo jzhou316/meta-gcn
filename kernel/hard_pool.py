@@ -12,7 +12,7 @@ SAGPooling = HardPooling
 
 
 class HardPool(torch.nn.Module):
-    def __init__(self, dataset, num_layers, hidden, ratio=0.8):
+    def __init__(self, dataset, num_layers, hidden):
         super().__init__()
         self.conv1 = GraphConv(dataset.num_features, hidden, aggr='mean')
         self.convs = torch.nn.ModuleList()
@@ -22,7 +22,7 @@ class HardPool(torch.nn.Module):
             for i in range(num_layers - 1)
         ])
         self.pools.extend(
-            [SAGPooling(hidden, ratio) for i in range((num_layers) // 2)])
+            [SAGPooling(hidden) for i in range((num_layers) // 2)])
         self.jump = JumpingKnowledge(mode='cat')
         self.lin1 = Linear(num_layers * hidden, hidden)
         self.lin2 = Linear(hidden, dataset.num_classes)
