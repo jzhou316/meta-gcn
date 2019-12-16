@@ -39,7 +39,7 @@ class SAGPool(torch.nn.Module):
             xs += [global_mean_pool(x, batch)]
             if i % 2 == 0 and i < len(self.convs) - 1:
                 pool = self.pools[i // 2]
-                x, edge_index, _, batch, _, _ = pool(x, edge_index,
+                x, edge_index, _, batch, perm, score = pool(x, edge_index,
                                                      batch=batch)
         x = self.jump(xs)
         x = F.relu(self.lin1(x))

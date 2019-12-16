@@ -1,8 +1,11 @@
 from itertools import product
 
+import random
 import argparse
 from datasets import get_dataset
 from train_eval import cross_validation_with_val_set
+
+import torch
 
 from gcn import GCN, GCNWithJK
 from graph_sage import GraphSAGE, GraphSAGEWithJK
@@ -18,6 +21,7 @@ from sort_pool import SortPool
 from hard_pool import HardPool
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--batch_size', type=int, default=128)
 parser.add_argument('--lr', type=float, default=0.01)
@@ -49,11 +53,14 @@ nets = [
 ]
 
 datasets = ['PROTEINS']
+#datasets = ['MUTAG']
 nets = [SAGPool]
+#nets = [EdgePool]
 nets = [HardPool]
+#nets = [TopK]
 
-layers = [2]
-hiddens = [128]
+layers = [4]
+hiddens = [64]
 
 
 def logger(info):
@@ -62,12 +69,17 @@ def logger(info):
     print('{:02d}/{:03d}: Val Loss: {:.4f}, Test Accuracy: {:.3f}'.format(
         fold, epoch, val_loss, test_acc))
 
+random.seed(args.seed)
+torch.manual_seed(args.seed)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
 
 results = []
 for dataset_name, Net in product(datasets, nets):
     best_result = (float('inf'), 0, 0)  # (loss, acc, std)
     print('-----\n{} - {}'.format(dataset_name, Net.__name__))
     for num_layers, hidden in product(layers, hiddens):
+        print(f'num_layers: {num_layers}, hidden: {hidden}')
         dataset = get_dataset(dataset_name, sparse=Net != DiffPool,
                               cleaned=True)
         model = Net(dataset, num_layers, hidden)
@@ -82,6 +94,7 @@ for dataset_name, Net in product(datasets, nets):
             lr_decay_step_size=args.lr_decay_step_size,
             weight_decay=0,
             logger=None,
+            # logger=logger,
         )
         if loss < best_result[0]:
             best_result = (loss, acc, std)

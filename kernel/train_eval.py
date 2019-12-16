@@ -80,7 +80,7 @@ def cross_validation_with_val_set(dataset, model, folds, epochs, batch_size,
 
 
 def k_fold(dataset, folds):
-    skf = StratifiedKFold(folds, shuffle=True, random_state=12345)
+    skf = StratifiedKFold(folds, shuffle=True, random_state=1234)
 
     test_indices, train_indices = [], []
     for _, idx in skf.split(torch.zeros(len(dataset)), dataset.data.y):
@@ -113,6 +113,8 @@ def train(model, optimizer, loader):
         data = data.to(device)
         out = model(data)
         loss = F.nll_loss(out, data.y.view(-1))
+        # print(out.sum(dim=0).detach().cpu().numpy())
+        # print(loss)
         loss.backward()
         total_loss += loss.item() * num_graphs(data)
         optimizer.step()
@@ -139,5 +141,6 @@ def eval_loss(model, loader):
         data = data.to(device)
         with torch.no_grad():
             out = model(data)
+            # print(out.sum(dim=0).detach().cpu().numpy())
         loss += F.nll_loss(out, data.y.view(-1), reduction='sum').item()
     return loss / len(loader.dataset)
