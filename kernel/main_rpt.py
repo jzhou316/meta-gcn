@@ -153,6 +153,6 @@ for dataset_name, Net in product(datasets, nets):
 
     desc = '{:.3f} ± {:.3f}'.format(best_result[1], best_result[2])
     logger.info('Best result - {}'.format(desc))
-    logger.info('Best hyper-parameter - {}, {}'.format(best_hyper))
+    logger.info('Best hyper-parameter - {}, {}'.format(*best_hyper))
     results += ['{} - {}: {}'.format(dataset_name, model, desc)]
 logger.info('-----\n{}'.format('\n'.join(results)))

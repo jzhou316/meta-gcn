@@ -111,6 +111,6 @@ for dataset_name, Net in product(datasets, nets):
 
     desc = '{:.3f} ± {:.3f}'.format(best_result[1], best_result[2])
     print('Best result - {}'.format(desc))
-    print('Best hyper-parameter - {}, {}'.format(best_hyper))
+    print('Best hyper-parameter - {}, {}'.format(*best_hyper))
     results += ['{} - {}: {}'.format(dataset_name, model, desc)]
 print('-----\n{}'.format('\n'.join(results)))
