@@ -16,7 +16,10 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def cross_validation_with_val_set(dataset, model, folds, epochs, batch_size,
                                   lr, lr_decay_factor, lr_decay_step_size,
-                                  weight_decay, random_state=12345, es_patience=-1, logger=None):
+                                  weight_decay, random_state=12345, es_patience=-1,
+                                  logger=None, log_details=False):
+
+    logging = logger.info if logger is not None else print
 
     val_losses, accs, durations = [], [], []
     for fold, (train_idx, test_idx,
@@ -57,8 +60,9 @@ def cross_validation_with_val_set(dataset, model, folds, epochs, batch_size,
                 'test_acc': accs[-1],
             }
 
-            if logger is not None:
-                logger(eval_info)
+            if log_details:
+                logging(f'Fold {(fold + 1):02d} / Epoch {(epoch + 1):03d}: Train loss: {train_loss:.4f}, '
+                        f'Val loss: {val_losses[-1]:.4f}, Test acc: {accs[-1]:.3f}')
 
             if epoch % lr_decay_step_size == 0:
                 for param_group in optimizer.param_groups:
@@ -83,8 +87,8 @@ def cross_validation_with_val_set(dataset, model, folds, epochs, batch_size,
     acc_mean = acc.mean().item()
     acc_std = acc.std().item()
     duration_mean = duration.mean().item()
-    print('Val Loss: {:.4f}, Test Accuracy: {:.3f} ± {:.3f}, Duration: {:.3f}'.
-          format(loss_mean, acc_mean, acc_std, duration_mean))
+    logging('Val Loss: {:.4f}, Test Accuracy: {:.3f} ± {:.3f}, Duration: {:.3f}'.
+            format(loss_mean, acc_mean, acc_std, duration_mean))
 
     return loss_mean, acc_mean, acc_std
 
