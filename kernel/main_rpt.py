@@ -78,7 +78,9 @@ hiddens = [64]
 
 if args.save_dir is None:
     args.save_dir = os.path.join('../saved_benchmark_gc', datasets[0].lower())
-log_name = os.path.join(nets[0].__name__, '-', str(layers[0]), '-', str(hiddens[0]))
+os.makedirs(args.save_dir, exist_ok=True)
+
+log_name = nets[0].__name__ + '-' + str(layers[0]) + '-' + str(hiddens[0])
 
 logger = logging_config(__name__, folder=args.save_dir, name=log_name, filemode='w')
 
