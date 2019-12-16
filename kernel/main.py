@@ -22,6 +22,8 @@ from hard_pool import HardPool
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--seed', type=int, default=0)
+parser.add_argument('--random_state', type=int, default=12345, help='random state for k-fold data split')
+parser.add_argument('--add_sl', type=int, default=0, help='whether to add self loops')
 parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--batch_size', type=int, default=128)
 parser.add_argument('--lr', type=float, default=0.01)
@@ -80,8 +82,11 @@ for dataset_name, Net in product(datasets, nets):
     print('-----\n{} - {}'.format(dataset_name, Net.__name__))
     for num_layers, hidden in product(layers, hiddens):
         print(f'num_layers: {num_layers}, hidden: {hidden}')
-        dataset = get_dataset(dataset_name, sparse=Net != DiffPool,
-                              cleaned=True)
+        dataset = get_dataset(dataset_name,
+                              sparse=Net != DiffPool,
+                              x_deg=True,
+                              add_sl=args.add_sl,
+                              cleaned=False)
         model = Net(dataset, num_layers, hidden)
         loss, acc, std = cross_validation_with_val_set(
             dataset,
@@ -93,6 +98,7 @@ for dataset_name, Net in product(datasets, nets):
             lr_decay_factor=args.lr_decay_factor,
             lr_decay_step_size=args.lr_decay_step_size,
             weight_decay=0,
+            random_state=args.random_state,
             logger=None,
             # logger=logger,
         )

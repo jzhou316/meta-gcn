@@ -12,11 +12,11 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def cross_validation_with_val_set(dataset, model, folds, epochs, batch_size,
                                   lr, lr_decay_factor, lr_decay_step_size,
-                                  weight_decay, logger=None):
+                                  weight_decay, random_state=12345, logger=None):
 
     val_losses, accs, durations = [], [], []
     for fold, (train_idx, test_idx,
-               val_idx) in enumerate(zip(*k_fold(dataset, folds))):
+               val_idx) in enumerate(zip(*k_fold(dataset, folds, random_state))):
 
         train_dataset = dataset[train_idx]
         test_dataset = dataset[test_idx]
@@ -79,8 +79,8 @@ def cross_validation_with_val_set(dataset, model, folds, epochs, batch_size,
     return loss_mean, acc_mean, acc_std
 
 
-def k_fold(dataset, folds):
-    skf = StratifiedKFold(folds, shuffle=True, random_state=1234)
+def k_fold(dataset, folds, random_state=12345):
+    skf = StratifiedKFold(folds, shuffle=True, random_state=random_state)
 
     test_indices, train_indices = [], []
     for _, idx in skf.split(torch.zeros(len(dataset)), dataset.data.y):
