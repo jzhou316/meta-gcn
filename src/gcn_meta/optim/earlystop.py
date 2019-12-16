@@ -31,6 +31,9 @@ class EarlyStopping:
 
     def __call__(self, val_metric):
 
+        if self.patience < 0 or self.patience is None:
+            return
+
         if self.best is None:
             self.best = val_metric
             self.improved = True

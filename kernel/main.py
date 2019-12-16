@@ -29,6 +29,7 @@ parser.add_argument('--batch_size', type=int, default=128)
 parser.add_argument('--lr', type=float, default=0.01)
 parser.add_argument('--lr_decay_factor', type=float, default=0.5)
 parser.add_argument('--lr_decay_step_size', type=int, default=50)
+parser.add_argument('--es_patience', type=int, default=-1, help='patience number for early stopping')
 args = parser.parse_args()
 
 layers = [1, 2, 3, 4, 5]
@@ -99,6 +100,7 @@ for dataset_name, Net in product(datasets, nets):
             lr_decay_step_size=args.lr_decay_step_size,
             weight_decay=0,
             random_state=args.random_state,
+            es_patience=args.es_patience,
             logger=None,
             # logger=logger,
         )

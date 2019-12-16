@@ -7,12 +7,16 @@ from torch.optim import Adam
 from sklearn.model_selection import StratifiedKFold
 from torch_geometric.data import DataLoader, DenseDataLoader as DenseLoader
 
+import sys
+sys.path.insert(0, '../src')
+from gcn_meta.optim.earlystop import EarlyStopping
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 def cross_validation_with_val_set(dataset, model, folds, epochs, batch_size,
                                   lr, lr_decay_factor, lr_decay_step_size,
-                                  weight_decay, random_state=12345, logger=None):
+                                  weight_decay, random_state=12345, es_patience=-1, logger=None):
 
     val_losses, accs, durations = [], [], []
     for fold, (train_idx, test_idx,
@@ -33,6 +37,7 @@ def cross_validation_with_val_set(dataset, model, folds, epochs, batch_size,
 
         model.to(device).reset_parameters()
         optimizer = Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+        early_stopper = EarlyStopping(patience=es_patience, mode='min', verbose=True, logger=None)
 
         if torch.cuda.is_available():
             torch.cuda.synchronize()
@@ -41,7 +46,8 @@ def cross_validation_with_val_set(dataset, model, folds, epochs, batch_size,
 
         for epoch in range(1, epochs + 1):
             train_loss = train(model, optimizer, train_loader)
-            val_losses.append(eval_loss(model, val_loader))
+            val_loss = eval_loss(model, val_loader)
+            val_losses.append(val_loss)
             accs.append(eval_acc(model, test_loader))
             eval_info = {
                 'fold': fold,
@@ -57,6 +63,10 @@ def cross_validation_with_val_set(dataset, model, folds, epochs, batch_size,
             if epoch % lr_decay_step_size == 0:
                 for param_group in optimizer.param_groups:
                     param_group['lr'] = lr_decay_factor * param_group['lr']
+
+            early_stopper(val_loss)
+            if early_stopper.early_stop:
+                break
 
         if torch.cuda.is_available():
             torch.cuda.synchronize()
