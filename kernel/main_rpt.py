@@ -6,6 +6,7 @@ from datasets import get_dataset
 from train_eval import cross_validation_with_val_set
 
 import torch
+import numpy as np
 
 from gcn import GCN, GCNWithJK
 from graph_sage import GraphSAGE, GraphSAGEWithJK
@@ -23,6 +24,7 @@ from hard_pool import HardPool
 parser = argparse.ArgumentParser()
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--random_state', type=int, default=12345, help='random state for k-fold data split')
+parser.add_argument('--repeat', type=int, default=1, help='number of repeat runs with the same data split')
 parser.add_argument('--add_sl', type=int, default=0, help='whether to add self loops')
 parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--batch_size', type=int, default=128)
@@ -90,21 +92,44 @@ for dataset_name, Net in product(datasets, nets):
                               add_sl=args.add_sl,
                               cleaned=False)
         model = Net(dataset, num_layers, hidden)
-        loss, acc, std = cross_validation_with_val_set(
-            dataset,
-            model,
-            folds=10,
-            epochs=args.epochs,
-            batch_size=args.batch_size,
-            lr=args.lr,
-            lr_decay_factor=args.lr_decay_factor,
-            lr_decay_step_size=args.lr_decay_step_size,
-            weight_decay=0,
-            random_state=args.random_state,
-            es_patience=args.es_patience,
-            logger=None,
-            # logger=logger,
-        )
+
+        # repeat runs, as the GCN models have randomness themselves
+        rpt_losses, rpt_accs, rpt_stds = [], [], []
+        rpt_best = (float('inf'), 0, 0)
+        for rpt in range(args.repeat):
+            loss, acc, std = cross_validation_with_val_set(
+                dataset,
+                model,
+                folds=10,
+                epochs=args.epochs,
+                batch_size=args.batch_size,
+                lr=args.lr,
+                lr_decay_factor=args.lr_decay_factor,
+                lr_decay_step_size=args.lr_decay_step_size,
+                weight_decay=0,
+                random_state=args.random_state,
+                es_patience=args.es_patience,
+                logger=None,
+                # logger=logger,
+            )
+            rpt_losses.append(loss)
+            rpt_accs.append(acc)
+            rpt_stds.append(std)
+            # if loss < rpt_best[0]:
+            #     rpt_best = (loss, acc, std)
+            #     rpt_best_id = rpt
+            #     # TODO: save the best model here
+
+        loss = sum(rpt_losses) / args.repeat
+        acc = sum(rpt_accs) / args.repeat
+        std = sum(rpt_stds) / args.repeat
+        print(f'Average - val_loss: {loss:3f}, test_acc: {acc:.3f} ± {std:.3f}')
+
+        rpt_best_id = np.argmin(rpt_losses)
+        # rpt_best_id = np.argmax(rpt_accs)
+        loss, acc, std = rpt_losses[rpt_best_id], rpt_accs[rpt_best_id], rpt_stds[rpt_best_id]
+        print(f'Best - val_loss: {loss:3f}, test_acc: {acc:.3f} ± {std:.3f}')
+
         if loss < best_result[0]:
             best_result = (loss, acc, std)
             best_hyper = (num_layers, hidden)
