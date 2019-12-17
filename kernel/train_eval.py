@@ -97,7 +97,7 @@ def cross_validation_with_val_set(dataset, model, folds, epochs, batch_size,
     test_loss_mean = test_loss.mean().item()
     test_acc_mean = test_acc.mean().item()
     test_acc_std = test_acc.std().item()
-    logging('Best epoch for each fold:', *[str(i) for i in argmin.cpu().numpy().tolist()])
+    logging('Best epoch for each fold: ' + ' '.join([str(i) for i in argmin.cpu().numpy().tolist()]))
     logging('Val Loss: {:.4f}, Val Accuracy: {:.3f} ± {:.3f}, '
             'Test Loss: {:.4f}, Test Accuracy: {:.3f} ± {:.3f}, Duration: {:.3f}'.
             format(val_loss_mean, val_acc_mean, val_acc_std,
