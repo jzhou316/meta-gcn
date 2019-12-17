@@ -34,6 +34,8 @@ parser.add_argument('--add_sl', type=int, default=0, help='whether to add self l
 parser.add_argument('--epochs', type=int, default=200)
 parser.add_argument('--batch_size', type=int, default=128)
 parser.add_argument('--save_dir', type=str, default=None, help='directory to save results')
+parser.add_argument('--save_name', type=str, default=None, help='name of file to save results (without .ext)')
+parser.add_argument('--logmode', type=str, default='w', help='logging file mode')
 parser.add_argument('--log_details', type=int, default=0, help='Whether to log details for every epoch in every fold')
 parser.add_argument('--lr', type=float, default=0.01)
 parser.add_argument('--lr_decay_factor', type=float, default=0.5)
@@ -80,9 +82,19 @@ if args.save_dir is None:
     args.save_dir = os.path.join('../saved_benchmark_gc', datasets[0].lower())
 os.makedirs(args.save_dir, exist_ok=True)
 
-log_name = nets[0].__name__ + '-' + str(layers[0]) + '-' + str(hiddens[0])
+if args.save_name is None:
+    log_name = nets[0].__name__ + '-' + str(layers[0]) + '-' + str(hiddens[0])
+else:
+    log_name = args.save_name
 
-logger = logging_config(__name__, folder=args.save_dir, name=log_name, filemode='w')
+logger = logging_config(__name__, folder=args.save_dir, name=log_name, filemode=arg.logmode)
+
+logger.info('python ' + ' '.join(sys.argv))
+logger.info('-' * 30)
+logger.info(args)
+logger.info('-' * 30)
+logger.info(time.ctime())
+logger.info('-' * 30)
 
 
 def logger_cv(info):
