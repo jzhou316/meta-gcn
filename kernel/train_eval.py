@@ -21,7 +21,7 @@ def cross_validation_with_val_set(dataset, model, folds, epochs, batch_size,
 
     logging = logger.info if logger is not None else print
 
-    val_losses, accs, durations = [], [], []
+    val_losses, val_accs, test_losses, test_accs, durations = [], [], [], [], []
     for fold, (train_idx, test_idx,
                val_idx) in enumerate(zip(*k_fold(dataset, folds, random_state))):
 
@@ -49,20 +49,18 @@ def cross_validation_with_val_set(dataset, model, folds, epochs, batch_size,
 
         for epoch in range(1, epochs + 1):
             train_loss = train(model, optimizer, train_loader)
-            val_loss = eval_loss(model, val_loader)
+
+            val_loss, val_acc = eval_loss_acc(model, val_loader)
             val_losses.append(val_loss)
-            accs.append(eval_acc(model, test_loader))
-            eval_info = {
-                'fold': fold,
-                'epoch': epoch,
-                'train_loss': train_loss,
-                'val_loss': val_losses[-1],
-                'test_acc': accs[-1],
-            }
+            val_accs.append(val_acc)
+            test_loss, test_acc = eval_loss_acc(model, test_loader)
+            test_losses.append(test_loss)
+            test_accs.append(test_acc)
 
             if log_details:
                 logging(f'Fold {(fold + 1):02d} / Epoch {(epoch + 1):03d}: Train loss: {train_loss:.4f}, '
-                        f'Val loss: {val_losses[-1]:.4f}, Test acc: {accs[-1]:.3f}')
+                        f'Val loss: {val_loss:.4f}, Val acc: {val_acc:.3f}, '
+                        f'Test loss: {test_loss:.4f}, Test acc: {test_acc:.3f}')
 
             if epoch % lr_decay_step_size == 0:
                 for param_group in optimizer.param_groups:
@@ -78,19 +76,34 @@ def cross_validation_with_val_set(dataset, model, folds, epochs, batch_size,
         t_end = time.perf_counter()
         durations.append(t_end - t_start)
 
-    loss, acc, duration = tensor(val_losses), tensor(accs), tensor(durations)
-    loss, acc = loss.view(folds, epochs), acc.view(folds, epochs)
-    loss, argmin = loss.min(dim=1)
-    acc = acc[torch.arange(folds, dtype=torch.long), argmin]
+    val_loss, val_acc, duration = tensor(val_losses), tensor(val_accs), tensor(durations)
+    test_loss, test_acc = tensor(test_losses), tensor(test_accs)
+    val_loss, val_acc = val_loss.view(folds, epochs), val_acc.view(folds, epochs)
+    test_loss, test_acc = test_loss.view(folds, epochs), test_acc.view(folds, epochs)
 
-    loss_mean = loss.mean().item()
-    acc_mean = acc.mean().item()
-    acc_std = acc.std().item()
+    # val_loss, argmin = val_loss.min(dim=1)
+    # val_acc = val_acc[torch.arange(folds, dtype=torch.long), argmin]
+
+    val_acc, argmin = val_acc.max(dim=1)
+    val_loss = val_loss[torch.arange(folds, dtype=torch.long), argmin]
+
+    test_loss = test_loss[torch.arange(folds, dtype=torch.long), argmin]
+    test_acc = test_acc[torch.arange(folds, dtype=torch.long), argmin]
+
+    val_loss_mean = val_loss.mean().item()
+    val_acc_mean = val_acc.mean().item()
+    val_acc_std = val_acc.std().item()
     duration_mean = duration.mean().item()
-    logging('Val Loss: {:.4f}, Test Accuracy: {:.3f} ± {:.3f}, Duration: {:.3f}'.
-            format(loss_mean, acc_mean, acc_std, duration_mean))
+    test_loss_mean = test_loss.mean().item()
+    test_acc_mean = test_acc.mean().item()
+    test_acc_std = test_acc.std().item()
+    logging('Best epoch for each fold:', argmin.cpu().numpy().tolist())
+    logging('Val Loss: {:.4f}, Val Accuracy: {:.3f} ± {:.3f}, '
+            'Test Loss: {:.4f}, Test Accuracy: {:.3f} ± {:.3f}, Duration: {:.3f}'.
+            format(val_loss_mean, val_acc_mean, val_acc_std,
+                   test_loss_mean, test_acc_mean, test_acc_std, duration_mean))
 
-    return loss_mean, acc_mean, acc_std
+    return val_loss_mean, val_acc_mean, val_acc_std, test_loss_mean, test_acc_mean, test_acc_std
 
 
 def k_fold(dataset, folds, random_state=12345):
@@ -158,3 +171,18 @@ def eval_loss(model, loader):
             # print(out.sum(dim=0).detach().cpu().numpy())
         loss += F.nll_loss(out, data.y.view(-1), reduction='sum').item()
     return loss / len(loader.dataset)
+
+
+def eval_loss_acc(model, loader):
+    model.eval()
+
+    loss = 0
+    correct = 0
+    for data in loader:
+        data = data.to(device)
+        with torch.no_grad():
+            out = model(data)
+        loss += F.nll_loss(out, data.y.view(-1), reduction='sum').item()
+        pred = out.max(1)[1]
+        correct += pred.eq(data.y.view(-1)).sum().item()
+    return loss / len(loader.dataset), correct / len(loader.dataset)

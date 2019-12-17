@@ -99,7 +99,8 @@ torch.backends.cudnn.benchmark = False
 
 results = []
 for dataset_name, Net in product(datasets, nets):
-    best_result = (float('inf'), 0, 0)  # (loss, acc, std)
+    best_result = (float('inf'), 0, 0, float('inf'), 0, 0)
+    # (val_loss, val_acc, val_std, test_loss, test_acc, test_std)
     logger.info('-----\n{} - {}'.format(dataset_name, Net.__name__))
     for num_layers, hidden in product(layers, hiddens):
         logger.info(f'num_layers: {num_layers}, hidden: {hidden}')
@@ -111,10 +112,11 @@ for dataset_name, Net in product(datasets, nets):
         model = Net(dataset, num_layers, hidden)
 
         # repeat runs, as the GCN models have randomness themselves
-        rpt_losses, rpt_accs, rpt_stds = [], [], []
-        rpt_best = (float('inf'), 0, 0)
+        rpt_val_losses, rpt_val_accs, rpt_val_stds = [], [], []
+        rpt_test_losses, rpt_test_accs, rpt_test_stds = [], [], []
+        rpt_best = (float('inf'), 0, 0, float('inf'), 0, 0)
         for rpt in range(args.repeat):
-            loss, acc, std = cross_validation_with_val_set(
+            val_loss, val_acc, val_std, test_loss, test_acc, test_std = cross_validation_with_val_set(
                 dataset,
                 model,
                 folds=10,
@@ -129,29 +131,39 @@ for dataset_name, Net in product(datasets, nets):
                 logger=logger,
                 log_details=bool(args.log_details),
             )
-            rpt_losses.append(loss)
-            rpt_accs.append(acc)
-            rpt_stds.append(std)
+            rpt_val_losses.append(val_loss)
+            rpt_val_accs.append(val_acc)
+            rpt_val_stds.append(val_std)
+            rpt_test_losses.append(test_loss)
+            rpt_test_accs.append(test_acc)
+            rpt_test_stds.append(test_std)
             # if loss < rpt_best[0]:
             #     rpt_best = (loss, acc, std)
             #     rpt_best_id = rpt
             #     # TODO: save the best model here
 
-        loss = sum(rpt_losses) / args.repeat
-        acc = sum(rpt_accs) / args.repeat
-        std = sum(rpt_stds) / args.repeat
-        logger.info(f'Average - val_loss: {loss:.4f}, test_acc: {acc:.3f} ± {std:.3f}')
+        val_loss = sum(rpt_val_losses) / args.repeat
+        val_acc = sum(rpt_val_accs) / args.repeat
+        val_std = sum(rpt_val_stds) / args.repeat
+        test_loss = sum(rpt_test_losses) / args.repeat
+        test_acc = sum(rpt_test_accs) / args.repeat
+        test_std = sum(rpt_test_stds) / args.repeat
+        logger.info(f'Average - val_loss: {val_loss:.4f}, test_acc: {val_acc:.3f} ± {val_std:.3f} | '
+                    f'test_loss: {test_loss:.4f}, test_acc: {test_acc:.3f} ± {test_std:.3f}')
 
-        rpt_best_id = np.argmin(rpt_losses)
-        # rpt_best_id = np.argmax(rpt_accs)
-        loss, acc, std = rpt_losses[rpt_best_id], rpt_accs[rpt_best_id], rpt_stds[rpt_best_id]
-        logger.info(f'Best - val_loss: {loss:.4f}, test_acc: {acc:.3f} ± {std:.3f}')
+        # rpt_best_id = np.argmin(rpt_val_losses)
+        rpt_best_id = np.argmax(rpt_val_accs)
+        val_loss, val_acc, val_std = rpt_val_losses[rpt_best_id], rpt_val_accs[rpt_best_id], rpt_val_stds[rpt_best_id]
+        test_loss, test_acc, test_std = rpt_test_losses[rpt_best_id], rpt_test_accs[rpt_best_id], rpt_test_stds[rpt_best_id]
+        logger.info(f'Best - val_loss: {val_loss:.4f}, test_acc: {val_acc:.3f} ± {val_std:.3f} | '
+                    f'test_loss: {test_loss:.4f}, test_acc: {test_acc:.3f} ± {test_std:.3f}')
 
-        if loss < best_result[0]:
-            best_result = (loss, acc, std)
+        # if val_loss < best_result[0]:
+        if val_acc > best_result[1]:
+            best_result = (val_loss, val_acc, val_std, test_loss, test_acc, test_std)
             best_hyper = (num_layers, hidden)
 
-    desc = '{:.3f} ± {:.3f}'.format(best_result[1], best_result[2])
+    desc = '{:.3f} ± {:.3f}'.format(best_result[4], best_result[5])
     logger.info('Best result - {}'.format(desc))
     logger.info('Best hyper-parameter - {}, {}'.format(*best_hyper))
     results += ['{} - {}: {}'.format(dataset_name, model, desc)]
