@@ -69,7 +69,7 @@ nets = [
 
 datasets = ['PROTEINS']
 #datasets = ['MUTAG']
-#nets = [SAGPool]
+nets = [SAGPool]
 #nets = [EdgePool]
 nets = [HardPool]
 #nets = [TopK]
@@ -87,7 +87,7 @@ if args.save_name is None:
 else:
     log_name = args.save_name
 
-logger = logging_config(__name__, folder=args.save_dir, name=log_name, filemode=arg.logmode)
+logger = logging_config(__name__, folder=args.save_dir, name=log_name, filemode=args.logmode)
 
 logger.info('python ' + ' '.join(sys.argv))
 logger.info('-' * 30)
