@@ -67,7 +67,7 @@ nets = [
 
 datasets = ['PROTEINS']
 #datasets = ['MUTAG']
-nets = [SAGPool]
+#nets = [SAGPool]
 #nets = [EdgePool]
 nets = [HardPool]
 #nets = [TopK]
