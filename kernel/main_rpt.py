@@ -80,9 +80,13 @@ nets = [GCN]
 layers = [3]
 hiddens = [64]
 
-nets = [SAGPool]
+nets = [GCNWithJK]
 layers = [3]
 hiddens = [64]
+
+# nets = [SAGPool]
+# layers = [3]
+# hiddens = [64]
 
 
 if args.save_dir is None:
