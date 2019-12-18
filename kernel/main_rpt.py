@@ -14,7 +14,8 @@ from gcn import GCN, GCNWithJK
 from graph_sage import GraphSAGE, GraphSAGEWithJK
 from gin import GIN0, GIN0WithJK, GIN, GINWithJK
 from graclus import Graclus
-from top_k import TopK
+# from top_k import TopK
+from top_k_new import TopK
 # from sag_pool import SAGPool
 from sag_pool_new import SAGPool
 from diff_pool import DiffPool
@@ -88,6 +89,9 @@ hiddens = [64]
 # layers = [3]
 # hiddens = [64]
 
+nets = [TopK]
+layers = [3]
+hiddens = [64]
 
 if args.save_dir is None:
     args.save_dir = os.path.join('../saved_benchmark_gc', datasets[0].lower())
