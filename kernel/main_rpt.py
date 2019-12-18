@@ -31,7 +31,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--random_state', type=int, default=12345, help='random state for k-fold data split')
 parser.add_argument('--repeat', type=int, default=1, help='number of repeat runs with the same data split')
-parser.add_argument('--add_sl', type=int, default=0, help='whether to add self loops')
+parser.add_argument('--add_sl', type=int, default=1, help='whether to add self loops')
 parser.add_argument('--epochs', type=int, default=200)
 parser.add_argument('--batch_size', type=int, default=128)
 parser.add_argument('--save_dir', type=str, default=None, help='directory to save results')
@@ -75,7 +75,8 @@ nets = [SAGPool]
 nets = [HardPool]
 #nets = [TopK]
 
-layers = [4]
+nets = [GCN]
+layers = [3]
 hiddens = [64]
 
 
