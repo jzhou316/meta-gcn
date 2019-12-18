@@ -43,6 +43,7 @@ parser.add_argument('--log_details', type=int, default=0, help='Whether to log d
 parser.add_argument('--lr', type=float, default=0.01)
 parser.add_argument('--lr_decay_factor', type=float, default=0.5)
 parser.add_argument('--lr_decay_step_size', type=int, default=50)
+parser.add_argument('--weight_decay', type=float, default=0)
 parser.add_argument('--es_patience', type=int, default=-1, help='patience number for early stopping')
 # do not use early stopping now, as there is some issue and seems early stopping doesn't do much
 args = parser.parse_args()
@@ -152,7 +153,7 @@ for dataset_name, Net in product(datasets, nets):
                 lr=args.lr,
                 lr_decay_factor=args.lr_decay_factor,
                 lr_decay_step_size=args.lr_decay_step_size,
-                weight_decay=0,
+                weight_decay=args.weight_decay,
                 random_state=args.random_state,
                 es_patience=args.es_patience,
                 logger=logger,
