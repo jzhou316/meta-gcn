@@ -15,7 +15,8 @@ from graph_sage import GraphSAGE, GraphSAGEWithJK
 from gin import GIN0, GIN0WithJK, GIN, GINWithJK
 from graclus import Graclus
 from top_k import TopK
-from sag_pool import SAGPool
+# from sag_pool import SAGPool
+from sag_pool_new import SAGPool
 from diff_pool import DiffPool
 from edge_pool import EdgePool
 from global_attention import GlobalAttentionNet
@@ -70,12 +71,16 @@ nets = [
 
 datasets = ['PROTEINS']
 #datasets = ['MUTAG']
-nets = [SAGPool]
+# nets = [SAGPool]
 #nets = [EdgePool]
 nets = [HardPool]
 #nets = [TopK]
 
 nets = [GCN]
+layers = [3]
+hiddens = [64]
+
+nets = [SAGPool]
 layers = [3]
 hiddens = [64]
 
