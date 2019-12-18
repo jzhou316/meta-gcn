@@ -33,7 +33,7 @@ class SAGPool(torch.nn.Module):
         x, edge_index, batch = data.x, data.edge_index, data.batch
         x = F.relu(self.conv1(x, edge_index))
         x, edge_index, _, batch, _, _ = self.pools[0](x, edge_index, batch=batch)
-        for i, conv, pool in enumerate(zip(self.convs, self.pools[1:])):
+        for i, (conv, pool) in enumerate(zip(self.convs, self.pools[1:])):
             x = F.relu(conv(x, edge_index))
             x, edge_index, _, batch, _, _ = pool(x, edge_index, batch=batch)
         x = global_mean_pool(x, batch)
