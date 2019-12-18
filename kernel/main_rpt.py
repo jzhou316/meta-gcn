@@ -167,14 +167,14 @@ for dataset_name, Net in product(datasets, nets):
         test_loss = sum(rpt_test_losses) / args.repeat
         test_acc = sum(rpt_test_accs) / args.repeat
         test_std = sum(rpt_test_stds) / args.repeat
-        logger.info(f'Average - val_loss: {val_loss:.4f}, test_acc: {val_acc:.3f} ± {val_std:.3f} | '
+        logger.info(f'Average - val_loss: {val_loss:.4f}, val_acc: {val_acc:.3f} ± {val_std:.3f} | '
                     f'test_loss: {test_loss:.4f}, test_acc: {test_acc:.3f} ± {test_std:.3f}')
 
         # rpt_best_id = np.argmin(rpt_val_losses)
         rpt_best_id = np.argmax(rpt_val_accs)
         val_loss, val_acc, val_std = rpt_val_losses[rpt_best_id], rpt_val_accs[rpt_best_id], rpt_val_stds[rpt_best_id]
         test_loss, test_acc, test_std = rpt_test_losses[rpt_best_id], rpt_test_accs[rpt_best_id], rpt_test_stds[rpt_best_id]
-        logger.info(f'Best - val_loss: {val_loss:.4f}, test_acc: {val_acc:.3f} ± {val_std:.3f} | '
+        logger.info(f'Best - val_loss: {val_loss:.4f}, val_acc: {val_acc:.3f} ± {val_std:.3f} | '
                     f'test_loss: {test_loss:.4f}, test_acc: {test_acc:.3f} ± {test_std:.3f}')
 
         # if val_loss < best_result[0]:
