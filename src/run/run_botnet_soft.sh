@@ -5,7 +5,7 @@ set -e
 # bot=chord    # chord, debru, kadem, leet
 bot=$1
 
-CUDA_VISIBLE_DEVICES=3 \
+CUDA_VISIBLE_DEVICES=0 \
 python train_botnet.py \
 --devid 0 \
 --seed 0 \
@@ -39,8 +39,8 @@ python train_botnet.py \
 --lr 0.001 \
 --weight_decay 5e-4 \
 --epochs 50 \
-
-CUDA_VISIBLE_DEVICES=3 \
+& \
+CUDA_VISIBLE_DEVICES=1 \
 python train_botnet.py \
 --devid 0 \
 --seed 0 \
@@ -73,9 +73,9 @@ python train_botnet.py \
 \
 --lr 0.001 \
 --weight_decay 5e-4 \
---epochs 50
-
-CUDA_VISIBLE_DEVICES=3 \
+--epochs 50 \
+& \
+CUDA_VISIBLE_DEVICES=2 \
 python train_botnet.py \
 --devid 0 \
 --seed 0 \
@@ -109,7 +109,7 @@ python train_botnet.py \
 --lr 0.001 \
 --weight_decay 5e-4 \
 --epochs 50 \
-
+& \
 CUDA_VISIBLE_DEVICES=3 \
 python train_botnet.py \
 --devid 0 \
@@ -144,6 +144,8 @@ python train_botnet.py \
 --lr 0.001 \
 --weight_decay 5e-4 \
 --epochs 50
+
+exit 0
 
 CUDA_VISIBLE_DEVICES=3 \
 python train_botnet.py \

@@ -40,7 +40,7 @@ python train_botnet.py \
 --weight_decay 5e-4 \
 --epochs 50
 
-exit 0
+# exit 0
 
 CUDA_VISIBLE_DEVICES=3 \
 python train_botnet.py \
@@ -146,6 +146,8 @@ python train_botnet.py \
 --lr 0.001 \
 --weight_decay 5e-4 \
 --epochs 50
+
+exit 0
 
 CUDA_VISIBLE_DEVICES=3 \
 python train_botnet.py \
