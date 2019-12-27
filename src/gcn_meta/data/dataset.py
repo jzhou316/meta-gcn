@@ -5,6 +5,7 @@ from torch.utils.data import Dataset
 from torch_geometric.utils import add_remaining_self_loops
 from torch_geometric.utils import degree
 from torch_geometric.datasets import TUDataset
+from torch_geometric.datasets import PPI
 import torch_geometric.transforms as T
 
 from .data import GraphData
@@ -113,3 +114,24 @@ class MyTUDataset(TUDataset):
                     self.transform = NormalizedDegree(mean, std)
             else:
                 self.transform = NodeFeatureOnes()
+
+
+class MyPPI(PPI):
+    """
+    PPI dataset for node classification.
+    """
+    def __init__(self, root, split, add_sl=False):
+        super().__init__(root, split)
+
+        if add_sl:
+            '''this doesn't work, as the data are copied when indexed out
+            # for data in self:
+            #     data.edge_index, _ = add_remaining_self_loops(data.edge_index)
+            '''
+            data_list = []
+            for data in self:
+                data.edge_index, _ = add_remaining_self_loops(data.edge_index)
+                data_list.append(data)
+            self.data, self.slices = self.collate(data_list)
+            # refer to https://github.com/rusty1s/pytorch_geometric/blob/eacb7d3e24a28aa50d7ae6d20a42676bc8ca1536
+            # /torch_geometric/datasets/tu_dataset.py#L140

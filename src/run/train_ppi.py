@@ -14,6 +14,7 @@ from sklearn.metrics import f1_score
 import sys
 
 sys.path.insert(0, '../')
+from gcn_meta.data.dataset import MyPPI
 from gcn_meta.models.gcn_model import GCNModel
 from gcn_meta.optim.earlystop import EarlyStopping
 from gcn_meta.optim.focal_loss import FocalLoss
@@ -21,6 +22,7 @@ from gcn_meta.optim.misc import timeSince, logging, print_cuda_mem
 
 ########## some default parameters ##########
 dataset = 'PPI'       # not used
+add_sl = False
 
 save_dir = '../saved_models/' + dataset.lower()
 save_name = 'temp_model.pt'
@@ -71,6 +73,7 @@ def parse_args():
     # data loading
     parser.add_argument('--dataset', type=str, default=dataset, choices=['PPI'],
                         help='dataset name')
+    parser.add_argument('--add_sl', type=int, default=add_sl, help='whether to add self loops')
     # parser.add_argument('--data_dir', type=str, default=data_dir, help='directory to find the dataset')
     # parser.add_argument('--data_train', type=str, default=data_train, help='file name of the training dataset')
     # parser.add_argument('--data_val', type=str, default=data_val, help='file name of the validation dataset')
@@ -154,17 +157,21 @@ log('loading dataset...')
 args.dataset = 'PPI'
 
 path = osp.join(osp.dirname(osp.realpath(__file__)), '../..', 'data', args.dataset)
-train_dataset = PPI(path, split='train')
-val_dataset = PPI(path, split='val')
-test_dataset = PPI(path, split='test')
+train_dataset = MyPPI(path, split='train', add_sl=bool(args.add_sl))
+val_dataset = MyPPI(path, split='val', add_sl=bool(args.add_sl))
+test_dataset = MyPPI(path, split='test', add_sl=bool(args.add_sl))
 
-log('adding self-loops...')
-for g in train_dataset:
-    g.edge_index, _ = add_remaining_self_loops(g.edge_index)
-for g in val_dataset:
-    g.edge_index, _ = add_remaining_self_loops(g.edge_index)
-for g in test_dataset:
-    g.edge_index, _ = add_remaining_self_loops(g.edge_index)
+# train_dataset = PPI(path, split='train')
+# val_dataset = PPI(path, split='val')
+# test_dataset = PPI(path, split='test')
+#
+# log('adding self-loops...')
+# for g in train_dataset:
+#     g.edge_index, _ = add_remaining_self_loops(g.edge_index)
+# for g in val_dataset:
+#     g.edge_index, _ = add_remaining_self_loops(g.edge_index)
+# for g in test_dataset:
+#     g.edge_index, _ = add_remaining_self_loops(g.edge_index)
 
 train_loader = DataLoader(train_dataset, batch_size=args.bsz, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False)
