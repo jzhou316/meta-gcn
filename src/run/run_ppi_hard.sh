@@ -7,6 +7,7 @@ python train_ppi.py \
 \
 --dataset PPI \
 --bsz 1 \
+--add_sl 1 \
 --save_name temp_model.pt \
 \
 --enc_sizes 1024 1024 121 \
