@@ -73,6 +73,8 @@ nets = [
 
 datasets = ['PROTEINS']
 #datasets = ['MUTAG']
+datasets = ['NCI1', 'MUTAG']
+#datasets = ['ENZYMES']
 # nets = [SAGPool]
 #nets = [EdgePool]
 nets = [HardPool]
@@ -86,13 +88,13 @@ nets = [GCNWithJK]
 layers = [3]
 hiddens = [64]
 
-# nets = [SAGPool]
-# layers = [3]
-# hiddens = [64]
-
-nets = [TopK]
+nets = [SAGPool]
 layers = [3]
 hiddens = [64]
+
+nets = [TopK]
+#layers = [3]
+#hiddens = [64]
 
 if args.save_dir is None:
     args.save_dir = os.path.join('../saved_benchmark_gc', datasets[0].lower())
